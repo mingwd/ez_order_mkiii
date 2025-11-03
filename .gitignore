@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+*.log
+
+# Virtual environments
+venv/
+.env/
+
+# macOS
+.DS_Store
+
+# Node.js
+node_modules/
+dist/
+build/
+
+# Django static/media
+staticfiles/
+media/
+
+# IDE
+.idea/
+.vscode/
+
+# Coverage / test
+coverage/
