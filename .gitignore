@@ -3,26 +3,18 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 *.log
-
-# Virtual environments
+.env
 venv/
-.env/
 
-# macOS
-.DS_Store
+# Django collectstatic
+staticfiles/
 
-# Node.js
+# Node
 node_modules/
 dist/
 build/
 
-# Django static/media
-staticfiles/
-media/
-
-# IDE
-.idea/
+# macOS / IDE
+.DS_Store
 .vscode/
-
-# Coverage / test
-coverage/
+.idea/
