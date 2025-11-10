@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 function App() {
+  // [para, function], para init : loading
   const [status, setStatus] = useState("loading...");
   useEffect(() => {
     const base = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";

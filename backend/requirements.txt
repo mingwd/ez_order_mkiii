@@ -8,3 +8,5 @@ packaging==25.0
 python-dotenv==1.2.1
 sqlparse==0.5.3
 whitenoise==6.11.0
+psycopg==3.2.12
+psycopg-binary==3.2.12
