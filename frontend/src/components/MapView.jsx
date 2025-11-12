@@ -1,18 +1,19 @@
+// src/components/MapView.jsx
 import { useEffect, useRef, useState } from "react";
 
-export default function MapView({ onPlaceIds, onMarkerClick }) {
+export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [] }) {
     const ref = useRef(null);
-    const markersRef = useRef([]);
-    const cbRef = useRef(onMarkerClick);           // ← 持有最新回调
+    const restMarkersRef = useRef([]);     // 仅餐厅 pins
+    const youMarkerRef = useRef(null);     // 自己位置 pin
+    const resultsRef = useRef([]);         // 保存 searchNearby 的原始结果
+    const cbRef = useRef(onMarkerClick);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
+    const mapRef = useRef(null);
 
+    useEffect(() => { cbRef.current = onMarkerClick; }, [onMarkerClick]);
 
-    // 更新回调引用，但不触发重建
-    useEffect(() => {
-        cbRef.current = onMarkerClick;
-    }, [onMarkerClick]);
-
+    // 初始化地图 + nearby 搜索（不画餐厅 pin）
     useEffect(() => {
         let cancelled = false;
 
@@ -33,16 +34,17 @@ export default function MapView({ onPlaceIds, onMarkerClick }) {
                 if (cancelled) return;
 
                 const map = new Map(ref.current, { center: pos, zoom: 13, mapId: "dfc9387e2257609b80304c82" });
+                mapRef.current = map;
 
-                // 用户定位 marker
+                // 当前位置 pin
                 const userIcon = document.createElement("img");
                 userIcon.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
                 userIcon.style.width = "20px";
                 userIcon.style.height = "20px";
                 const you = new Marker({ map, position: pos, title: "You are here", content: userIcon });
-                markersRef.current.push(you);
+                youMarkerRef.current = you;
 
-                // Nearby
+                // Nearby 搜索
                 const req = {
                     fields: ["id", "displayName", "location"],
                     locationRestriction: { center: pos, radius: 2000 },
@@ -52,26 +54,9 @@ export default function MapView({ onPlaceIds, onMarkerClick }) {
                 const results = resp?.places || [];
                 if (cancelled) return;
 
+                resultsRef.current = results;
                 const ids = results.map((p) => p.id).filter(Boolean);
-                onPlaceIds?.(ids);
-
-                // 餐厅 markers
-                results.forEach((p) => {
-                    if (!p.location) return;
-                    const icon = document.createElement("img");
-                    icon.src = "https://maps.gstatic.com/mapfiles/ms2/micons/orange-dot.png";
-                    icon.style.width = "18px";
-                    icon.style.height = "18px";
-                    const m = new Marker({
-                        map,
-                        position: p.location,
-                        title: p.displayName?.text || "Unnamed",
-                        content: icon,
-                        gmpClickable: true,
-                    });
-                    m.addListener("gmp-click", () => cbRef.current?.(p.id)); // ← 使用 ref 中的回调
-                    markersRef.current.push(m);
-                });
+                onPlaceIds?.(ids);   // 交给上层去 /resolve
 
                 setLoading(false);
             } catch (e) {
@@ -84,10 +69,47 @@ export default function MapView({ onPlaceIds, onMarkerClick }) {
         init();
         return () => {
             cancelled = true;
-            markersRef.current.forEach((m) => (m.map = null));
-            markersRef.current = [];
+            // 清理
+            restMarkersRef.current.forEach((m) => (m.map = null));
+            restMarkersRef.current = [];
+            if (youMarkerRef.current) youMarkerRef.current.map = null;
+            youMarkerRef.current = null;
+            mapRef.current = null;
         };
-    }, [onPlaceIds]); // ⚠️ 只依赖 onPlaceIds，去掉 onMarkerClick
+    }, [onPlaceIds]);
+
+    // 根据 allowedPlaceIds 绘制/更新餐厅 pins（只画数据库存在的）
+    useEffect(() => {
+        const { AdvancedMarkerElement: Marker } = google.maps.marker || {};
+        const map = mapRef.current;
+        if (!map || !Marker) return;
+
+        // 清理旧的餐厅 pins
+        restMarkersRef.current.forEach((m) => (m.map = null));
+        restMarkersRef.current = [];
+
+        if (!allowedPlaceIds || allowedPlaceIds.length === 0) return;
+
+        const allowed = new Set(allowedPlaceIds);
+
+        resultsRef.current.forEach((p) => {
+            if (!p.location || !allowed.has(p.id)) return;
+            const icon = document.createElement("img");
+            icon.src = "https://maps.gstatic.com/mapfiles/ms2/micons/orange-dot.png";
+            icon.style.width = "18px";
+            icon.style.height = "18px";
+
+            const m = new Marker({
+                map,
+                position: p.location,
+                title: p.displayName?.text || "Unnamed",
+                content: icon,
+                gmpClickable: true,
+            });
+            m.addListener("gmp-click", () => cbRef.current?.(p.id));
+            restMarkersRef.current.push(m);
+        });
+    }, [allowedPlaceIds]);
 
     return (
         <div className="relative w-full h-full">

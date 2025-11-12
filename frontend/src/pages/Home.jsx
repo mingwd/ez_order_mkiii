@@ -5,14 +5,14 @@ import MapView from "../components/MapView";
 
 export default function Home() {
     const [rests, setRests] = useState([]);
+    const [allowedIds, setAllowedIds] = useState([]); // 只在库里的 place_id
     const [active, setActive] = useState(null);
 
-    // 分离的加载与错误
+    // 加回这些状态
     const [resolveLoading, setResolveLoading] = useState(false);
-    const [itemsLoading, setItemsLoading] = useState(false);
     const [resolveErr, setResolveErr] = useState("");
+    const [itemsLoading, setItemsLoading] = useState(false);
     const [itemsErr, setItemsErr] = useState("");
-
     const [items, setItems] = useState([]);
 
     // Map 回调：拿到 place_ids → 调后端 resolve
@@ -20,22 +20,32 @@ export default function Home() {
         try {
             setResolveErr("");
             setResolveLoading(true);
+            if (!ids || ids.length === 0) {
+                setRests([]);
+                setAllowedIds([]);
+                return;
+            }
             const d = await apiResolve(ids);
-            setRests(d.restaurants || []);
+            const list = d.restaurants || [];
+            setRests(list);
+            setAllowedIds(list.map((r) => r.google_place_id)); // 回传给地图当白名单
         } catch (e) {
             console.error(e);
             setRests([]);
+            setAllowedIds([]); // 清空白名单 → 地图不画餐厅 pin
             setResolveErr("Resolve failed.");
         } finally {
             setResolveLoading(false);
         }
     }, []);
 
+    // 为避免依赖抖动，用 ref 保存最新的 rests
     const restsRef = useRef(rests);
     useEffect(() => {
         restsRef.current = rests;
     }, [rests]);
 
+    // 点 pin 用 place_id 找到右侧对应餐厅并打开菜单
     const handleMarkerClick = useCallback((placeId) => {
         const r =
             restsRef.current.find(
@@ -49,14 +59,8 @@ export default function Home() {
         if (r) {
             openMenu(r);
         } else {
-            // 轻提示可选
-            // setResolveErr("This place is not supported yet.");
             console.log("Marker clicked but not in resolved list:", placeId);
         }
-    }, []);
-
-    useEffect(() => {
-        // 初始不再调用 apiResolve，等待 MapView 给 ids
     }, []);
 
     async function openMenu(r) {
@@ -84,8 +88,12 @@ export default function Home() {
     return (
         <div className="min-h-screen p-6 grid grid-cols-12 gap-6 bg-gray-50">
             {/* 左边地图 */}
-            <div className="col-span-8 bg-white rounded-xl border shadow-sm p-0 h-[480px]">
-                <MapView onPlaceIds={handlePlaceIds} onMarkerClick={handleMarkerClick} />
+            <div className="col-span-8 bg-white rounded-xl border shadow-sm p-0">
+                <MapView
+                    onPlaceIds={handlePlaceIds}
+                    onMarkerClick={handleMarkerClick}
+                    allowedPlaceIds={allowedIds}   // 只画数据库里“有”的
+                />
             </div>
 
             {/* 右侧餐厅列表 */}
