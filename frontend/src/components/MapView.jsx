@@ -1,91 +1,93 @@
-// src/components/MapView.jsx
 import { useEffect, useRef, useState } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
 
-export default function MapView({ onPlaceIds }) {
+export default function MapView({ onPlaceIds, onMarkerClick }) {
     const ref = useRef(null);
+    const markersRef = useRef([]);
+    const cbRef = useRef(onMarkerClick);           // ← 持有最新回调
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
 
+
+    // 更新回调引用，但不触发重建
     useEffect(() => {
-        let map, marker, placesService;
+        cbRef.current = onMarkerClick;
+    }, [onMarkerClick]);
+
+    useEffect(() => {
         let cancelled = false;
 
         async function init() {
             try {
-                const loader = new Loader({
-                    apiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-                    version: "weekly",
-                    libraries: ["places"],
-                });
-                const { Map } = await loader.importLibrary("maps");
-                await loader.importLibrary("places");
+                const { Map } = await google.maps.importLibrary("maps");
+                const { Place } = await google.maps.importLibrary("places");
+                const { AdvancedMarkerElement: Marker } = await google.maps.importLibrary("marker");
 
-                // 定位：先用浏览器定位，不成功就用一个默认点（西雅图中心）
                 const pos = await new Promise((resolve) => {
                     if (!navigator.geolocation) return resolve({ lat: 47.6097, lng: -122.3331 });
                     navigator.geolocation.getCurrentPosition(
                         (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
                         () => resolve({ lat: 47.6097, lng: -122.3331 }),
-                        { enableHighAccuracy: true, timeout: 5000 }
+                        { enableHighAccuracy: true, timeout: 3000 }
                     );
                 });
-
                 if (cancelled) return;
 
-                map = new Map(ref.current, {
-                    center: pos,
-                    zoom: 14,
-                    mapId: "eazy-order-map",
-                });
+                const map = new Map(ref.current, { center: pos, zoom: 13, mapId: "dfc9387e2257609b80304c82" });
 
-                // 用户当前位置
-                marker = new google.maps.Marker({
-                    position: pos,
-                    map,
-                    title: "You are here",
-                });
+                // 用户定位 marker
+                const userIcon = document.createElement("img");
+                userIcon.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
+                userIcon.style.width = "20px";
+                userIcon.style.height = "20px";
+                const you = new Marker({ map, position: pos, title: "You are here", content: userIcon });
+                markersRef.current.push(you);
 
-                // Nearby 搜索
-                placesService = new google.maps.places.PlacesService(map);
-                const request = {
-                    location: pos,
-                    radius: 1500,     // 米
-                    type: "restaurant",
+                // Nearby
+                const req = {
+                    fields: ["id", "displayName", "location"],
+                    locationRestriction: { center: pos, radius: 2000 },
+                    includedPrimaryTypes: ["restaurant"],
                 };
-                placesService.nearbySearch(request, (results, status) => {
-                    if (cancelled) return;
-                    if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
-                        setErr("Nearby search failed.");
-                        setLoading(false);
-                        return;
-                    }
-                    // 拿到 place_id 列表给父组件
-                    const ids = results.map(r => r.place_id).filter(Boolean);
-                    onPlaceIds?.(ids);
+                const resp = await Place.searchNearby(req);
+                const results = resp?.places || [];
+                if (cancelled) return;
 
-                    // 可选：在地图上加 marker（未来再做美化）
-                    results.forEach((r) => {
-                        if (!r.geometry?.location) return;
-                        new google.maps.Marker({
-                            position: r.geometry.location,
-                            map,
-                            title: r.name,
-                        });
+                const ids = results.map((p) => p.id).filter(Boolean);
+                onPlaceIds?.(ids);
+
+                // 餐厅 markers
+                results.forEach((p) => {
+                    if (!p.location) return;
+                    const icon = document.createElement("img");
+                    icon.src = "https://maps.gstatic.com/mapfiles/ms2/micons/orange-dot.png";
+                    icon.style.width = "18px";
+                    icon.style.height = "18px";
+                    const m = new Marker({
+                        map,
+                        position: p.location,
+                        title: p.displayName?.text || "Unnamed",
+                        content: icon,
+                        gmpClickable: true,
                     });
-
-                    setLoading(false);
+                    m.addListener("gmp-click", () => cbRef.current?.(p.id)); // ← 使用 ref 中的回调
+                    markersRef.current.push(m);
                 });
+
+                setLoading(false);
             } catch (e) {
                 console.error(e);
-                setErr("Map init failed.");
+                setErr(`Map init or Nearby Search failed: ${e?.message || e}`);
                 setLoading(false);
             }
         }
 
         init();
-        return () => { cancelled = true; };
-    }, [onPlaceIds]);
+        return () => {
+            cancelled = true;
+            markersRef.current.forEach((m) => (m.map = null));
+            markersRef.current = [];
+        };
+    }, [onPlaceIds]); // ⚠️ 只依赖 onPlaceIds，去掉 onMarkerClick
 
     return (
         <div className="relative w-full h-full">
