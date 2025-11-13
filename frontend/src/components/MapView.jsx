@@ -105,7 +105,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
                 const userIcon = document.createElement("img");
                 userIcon.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
                 userIcon.style.width = "20px";
-                userIcon.style.height = "20px";
+                userIcon.style.height = "30px";
 
                 const you = new Marker({
                     map,

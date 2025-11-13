@@ -3,6 +3,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { apiResolve, apiItems } from "../api/client";
 import MapView from "../components/MapView";
 
+import { apiAiOrder } from "../api/client";
+
 export default function Home() {
     const [rests, setRests] = useState([]);
     const [allowedIds, setAllowedIds] = useState([]);
@@ -89,8 +91,11 @@ export default function Home() {
                     </div>
                     {/* 中：Order for me */}
                     <button
+                        onClick={async () => {
+                            const d = await apiAiOrder();
+                            alert(`AI recommends: ${d.item_name} @ ${d.restaurant_name} @ ${d.message}`);
+                        }}
                         className="px-4 py-2 rounded-xl border border-gray-200 bg-gray-100 hover:bg-gray-200 transition text-sm font-medium"
-                        onClick={() => alert("TODO: one-click order")}
                     >
                         Order for me
                     </button>

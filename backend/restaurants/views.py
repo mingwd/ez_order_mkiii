@@ -5,6 +5,9 @@ from django.db.models import Q
 from .models import Restaurant, Item
 from .serializers import RestaurantSerializer, ItemSerializer
 
+import os
+from openai import OpenAI
+
 @api_view(["POST"])
 def resolve_restaurants(request):
     """
@@ -44,3 +47,20 @@ def items_by_restaurant(request, rest_id):
     items = Item.objects.filter(restaurant_id=rest_id, is_active=True).order_by("id")
     data = ItemSerializer(items, many=True).data
     return Response({"items": data})
+
+@api_view(["POST"])
+def ai_order(request):
+    try:
+        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+        completion = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "user", "content": "Say one funny sentence about food."}
+            ]
+        )
+
+        reply = completion.choices[0].message.content
+        return Response({"message": reply})
+    except Exception as e:
+        return Response({"error": str(e)}, status=500)

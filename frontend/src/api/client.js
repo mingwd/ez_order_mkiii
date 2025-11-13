@@ -1,4 +1,5 @@
 const BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
+
 export async function apiResolve(placeIds) {
     const r = await fetch(`${BASE}/api/restaurants/resolve`, {
         method: "POST",
@@ -12,5 +13,11 @@ export async function apiResolve(placeIds) {
 export async function apiItems(restId) {
     const r = await fetch(`${BASE}/api/restaurants/${restId}/items`);
     if (!r.ok) throw new Error("items failed");
+    return r.json();
+}
+
+export async function apiAiOrder() {
+    const r = await fetch(`${BASE}/api/ai_order/`, { method: "POST" });
+    if (!r.ok) throw new Error("AI order failed");
     return r.json();
 }
