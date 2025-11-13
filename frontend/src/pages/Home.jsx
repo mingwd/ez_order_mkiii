@@ -1,32 +1,63 @@
 // src/pages/Home.jsx
 import { useEffect, useState, useCallback, useRef } from "react";
-import { apiResolve, apiItems } from "../api/client";
+import {
+    apiResolve,
+    apiItems,
+    apiAiOrder,
+    apiMe
+} from "../api/client";
 import MapView from "../components/MapView";
-
-import { apiAiOrder } from "../api/client";
+import { useNavigate } from "react-router-dom";
 
 export default function Home() {
+    const navigate = useNavigate();
+
+    // ---- 用户状态 ----
+    const [user, setUser] = useState(null);
+
+    // 页面加载时尝试恢复登录状态
+    useEffect(() => {
+        (async () => {
+            const token = localStorage.getItem("access");
+            if (!token) return;
+
+            try {
+                const me = await apiMe();
+                setUser(me);
+            } catch (err) {
+                console.error(err);
+                localStorage.removeItem("access");
+                localStorage.removeItem("refresh");
+            }
+        })();
+    }, []);
+
+    // ---- 地图 / 餐厅 / 菜品 ----
     const [rests, setRests] = useState([]);
     const [allowedIds, setAllowedIds] = useState([]);
     const [active, setActive] = useState(null);
 
     const [resolveLoading, setResolveLoading] = useState(false);
     const [resolveErr, setResolveErr] = useState("");
+
     const [itemsLoading, setItemsLoading] = useState(false);
     const [itemsErr, setItemsErr] = useState("");
     const [items, setItems] = useState([]);
 
+    // 从地图获得 place_ids → 后端 resolve
     const handlePlaceIds = useCallback(async (ids) => {
         try {
             setResolveErr("");
             setResolveLoading(true);
+
             if (!ids || ids.length === 0) {
                 setRests([]);
                 setAllowedIds([]);
                 return;
             }
+
             const d = await apiResolve(ids);
-            const list = (d && d.restaurants) || [];
+            const list = d.restaurants || [];
             setRests(list);
             setAllowedIds(list.map((r) => r.google_place_id));
         } catch (e) {
@@ -39,32 +70,30 @@ export default function Home() {
         }
     }, []);
 
+    // ref 记录最新的 rests 用于 pin 点击
     const restsRef = useRef(rests);
-    useEffect(() => {
-        restsRef.current = rests;
-    }, [rests]);
+    useEffect(() => { restsRef.current = rests; }, [rests]);
 
     const handleMarkerClick = useCallback((placeId) => {
-        const r =
-            restsRef.current.find(
-                (x) =>
-                    x.google_place_id === placeId ||
-                    x.place_id === placeId ||
-                    x.placeId === placeId ||
-                    x.googlePlaceId === placeId
-            ) || null;
+        const r = restsRef.current.find(
+            (x) =>
+                x.google_place_id === placeId ||
+                x.place_id === placeId ||
+                x.placeId === placeId ||
+                x.googlePlaceId === placeId
+        );
         if (r) openMenu(r);
-        else console.log("Marker clicked but not in resolved list:", placeId);
     }, []);
 
     async function openMenu(r) {
         setActive(r);
-        setItems([]);
         setItemsErr("");
         setItemsLoading(true);
+        setItems([]);
+
         try {
             const d = await apiItems(r.id);
-            setItems((d && d.items) || []);
+            setItems(d.items || []);
         } catch (e) {
             console.error(e);
             setItemsErr("Failed to load menu.");
@@ -79,37 +108,62 @@ export default function Home() {
         setItemsErr("");
     }
 
+    // ---- Order for me（目前只是测试） ----
+    async function handleAiOrderClick() {
+        try {
+            const d = await apiAiOrder();
+            alert(d.message || "AI returned nothing.");
+        } catch (e) {
+            alert("AI order failed.");
+        }
+    }
+
     return (
         <div className="w-screen h-screen overflow-x-hidden bg-gray-50 flex flex-col">
             {/* Header: 20% */}
-            <header className="h-[10vh] w-full border-b bg-white">
+            <header className="h-[20vh] w-full border-b bg-white">
                 <div className="h-full px-6 flex items-center justify-between">
-                    {/* 左：Logo 占位 */}
+                    {/* Logo */}
                     <div className="flex items-center gap-2">
                         <div className="w-8 h-8 rounded-lg bg-orange-300/70" />
                         <span className="font-semibold text-gray-800">eazy-order</span>
                     </div>
-                    {/* 中：Order for me */}
+
+                    {/* Order for me */}
                     <button
-                        onClick={async () => {
-                            const d = await apiAiOrder();
-                            alert(`AI recommends: ${d.item_name} @ ${d.restaurant_name} @ ${d.message}`);
-                        }}
                         className="px-4 py-2 rounded-xl border border-gray-200 bg-gray-100 hover:bg-gray-200 transition text-sm font-medium"
+                        onClick={handleAiOrderClick}
                     >
                         Order for me
                     </button>
-                    {/* 右：用户名占位 */}
-                    <div className="text-sm text-gray-700">Guest</div>
+
+                    {/* 用户 / 登录 */}
+                    <div className="text-sm text-gray-700 flex items-center gap-3">
+                        {user ? (
+                            <button
+                                className="px-3 py-1 rounded-lg border hover:bg-gray-100"
+                                onClick={() => navigate("/profile")}
+                            >
+                                {user.username}
+                            </button>
+                        ) : (
+                            <button
+                                className="px-3 py-1 rounded-lg border hover:bg-gray-100"
+                                onClick={() => navigate("/auth")}
+                            >
+                                Guest
+                            </button>
+                        )}
+                    </div>
                 </div>
             </header>
 
             {/* Main: 60% */}
-            <main className="h-[80vh] w-full px-6 py-4">
+            <main className="h-[60vh] w-full px-6 py-4">
                 <div className="grid grid-cols-12 gap-6 h-full">
-                    {/* 左边地图：撑满高度 */}
+                    {/* 地图 */}
                     <div className="col-span-8 bg-white rounded-xl border shadow-sm p-0 h-full">
-                        <div className="w-full h-full rounded-xl overflow-hidden">
+                        <div className="w-full h-full overflow-hidden">
                             <MapView
                                 onPlaceIds={handlePlaceIds}
                                 onMarkerClick={handleMarkerClick}
@@ -118,9 +172,11 @@ export default function Home() {
                         </div>
                     </div>
 
-                    {/* 右侧餐厅列表：撑满高度 + 内部滚动 */}
+                    {/* 餐厅列表 */}
                     <div className="col-span-4 bg-white rounded-xl border shadow-sm p-4 h-full flex flex-col min-h-0">
-                        <h2 className="text-xl font-semibold mb-2 text-gray-800">Nearby Restaurants</h2>
+                        <h2 className="text-xl font-semibold mb-2 text-gray-800">
+                            Nearby Restaurants
+                        </h2>
 
                         {resolveLoading && <div className="text-sm text-gray-500 mb-2">Loading…</div>}
                         {resolveErr && <div className="text-sm text-red-600 mb-2">{resolveErr}</div>}
@@ -144,10 +200,9 @@ export default function Home() {
                 </div>
             </main>
 
-            {/* Footer: 10%（包含购物车区域） */}
-            <footer className="h-[10vh] w-full border-t bg-transparent relative">
-                {/* 右下角购物车：固定在 footer 内部的右下角 */}
-                <div className="absolute right-4 bottom-4 w-80 rounded-2xl border-2 border-gray-300 bg-white/90 backdrop-blur px-4 py-3 shadow-sm">
+            {/* Footer: 20% */}
+            <footer className="h-[20vh] w-full border-t bg-white relative">
+                <div className="absolute right-4 bottom-4 w-80 rounded-2xl border-2 border-dashed border-gray-300 bg-white/90 px-4 py-3 shadow-sm">
                     <div className="text-sm font-medium text-gray-700">Cart (coming soon)</div>
                     <div className="text-xs text-gray-500">Your items will appear here.</div>
                 </div>
@@ -156,7 +211,7 @@ export default function Home() {
             {/* 菜单弹窗 */}
             {active && (
                 <div
-                    className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50"
+                    className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-40"
                     onClick={closeModal}
                 >
                     <div
@@ -166,16 +221,19 @@ export default function Home() {
                         <button
                             onClick={closeModal}
                             className="absolute right-4 top-4 text-gray-500 hover:text-black text-xl leading-none"
-                            aria-label="Close"
                         >
                             ×
                         </button>
 
                         <h3 className="text-lg font-semibold text-gray-800">{active.name}</h3>
-                        {active.address && <p className="text-sm text-gray-500 mb-3">{active.address}</p>}
+                        {active.address && (
+                            <p className="text-sm text-gray-500 mb-3">{active.address}</p>
+                        )}
 
                         {itemsLoading && <div className="text-sm text-gray-500">Loading menu…</div>}
-                        {itemsErr && !itemsLoading && <div className="text-sm text-red-600">{itemsErr}</div>}
+                        {itemsErr && !itemsLoading && (
+                            <div className="text-sm text-red-600">{itemsErr}</div>
+                        )}
 
                         {!itemsLoading && !itemsErr && (
                             <div className="max-h-80 overflow-y-auto divide-y">
@@ -187,7 +245,9 @@ export default function Home() {
                                             <div>
                                                 <div className="font-medium text-gray-800">{it.name}</div>
                                                 {it.description && (
-                                                    <div className="text-xs text-gray-500">{it.description}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        {it.description}
+                                                    </div>
                                                 )}
                                             </div>
                                             <div className="ml-3 font-mono text-gray-700">
