@@ -51,7 +51,35 @@ export async function apiLogin(username, password) {
 }
 
 export async function apiMe() {
-    const r = await fetch(`${BASE}/api/auth/me/`, { headers: { ...authHeaders() } });
-    if (!r.ok) throw new Error(await r.text());
+    const r = await fetch(`${BASE}/api/auth/me/`, {
+        headers: {
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("me failed");
+    return r.json();
+}
+
+export async function apiGetProfile() {
+    const r = await fetch(`${BASE}/api/auth/profile/`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("profile get failed");
+    return r.json();
+}
+
+export async function apiUpdateProfile(payload) {
+    const r = await fetch(`${BASE}/api/auth/profile/`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error("profile update failed");
     return r.json();
 }

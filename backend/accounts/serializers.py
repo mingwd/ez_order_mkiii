@@ -20,3 +20,26 @@ class CustomerRegisterSerializer(serializers.Serializer):
             user.profile.user_type = "customer"
             user.profile.save()
         return user
+
+class MeSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    user_type = serializers.CharField()
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source="user.username", read_only=True)
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "username",
+            "user_type",
+            "height_cm",
+            "weight_kg",
+            "age",
+            "gender",
+            "activity_level",
+            "bmr", 
+            "memo",
+        ]
+        read_only_fields = ["user_type", "bmr", "username"]

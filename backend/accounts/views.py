@@ -3,8 +3,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CustomerRegisterSerializer
+from .serializers import CustomerRegisterSerializer, UserProfileSerializer, MeSerializer
 from .models import UserProfile
+from django.contrib.auth.models import User
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
@@ -14,8 +15,40 @@ def register_customer(request):
     user = s.save()
     return Response({"ok": True, "username": user.username, "user_type": "customer"}, status=201)
 
+
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def me(request):
-    ut = getattr(request.user.profile, "user_type", None)
-    return Response({"id": request.user.id, "username": request.user.username, "user_type": ut})
+    user: User = request.user
+    profile, _ = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={"user_type": "customer"},
+    )
+    data = {"username": user.username, "user_type": profile.user_type}
+    s = MeSerializer(data)
+    return Response(s.data)
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def profile_detail(request):
+    """
+    GET  返回当前用户的完整 profile 信息
+    PUT  更新 height/weight/age/gender/activity_level/memo
+    """
+    user: User = request.user
+    profile, _ = UserProfile.objects.get_or_create(
+        user=user,
+        defaults={"user_type": "customer"},
+    )
+
+    if request.method == "GET":
+        s = UserProfileSerializer(profile)
+        return Response(s.data)
+
+    # PUT
+    s = UserProfileSerializer(profile, data=request.data, partial=True)
+    if s.is_valid():
+        s.save()
+        return Response(s.data)
+    return Response(s.errors, status=status.HTTP_400_BAD_REQUEST)
