@@ -120,7 +120,7 @@ class UserProfile(models.Model):
         return f"{self.user.username} ({self.user_type})"
 
 
-# ========== 每一类偏好一张 through 表，都有 score ==========
+
 class UserCuisinePreference(models.Model):
     profile = models.ForeignKey(
         UserProfile,

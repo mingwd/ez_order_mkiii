@@ -1,3 +1,4 @@
+// src/api/client.js
 const BASE = import.meta.env.VITE_API_BASE || "http://127.0.0.1:8000";
 
 export async function apiResolve(placeIds) {
@@ -31,7 +32,7 @@ export async function apiRegisterCustomer(username, password) {
     const r = await fetch(`${BASE}/api/auth/register/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }), // 不传 user_type
+        body: JSON.stringify({ username, password }), // 不传 user_type，后端默认 customer
     });
     if (!r.ok) throw new Error(await r.text());
     return r.json();
@@ -81,5 +82,29 @@ export async function apiUpdateProfile(payload) {
         body: JSON.stringify(payload),
     });
     if (!r.ok) throw new Error("profile update failed");
+    return r.json();
+}
+
+export async function apiPlaceOrder(restaurantId, items) {
+    // items: [{ item_id: 1, quantity: 2 }, ...]
+    const r = await fetch(`${BASE}/api/restaurants/orders/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify({
+            restaurant_id: restaurantId,
+            items,
+        }),
+    });
+
+    if (!r.ok) {
+        if (r.status === 401) {
+            // 方便前端识别“没登录 / token 过期”
+            throw new Error("unauthorized");
+        }
+        throw new Error("order failed");
+    }
     return r.json();
 }
