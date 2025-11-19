@@ -26,7 +26,7 @@ class OrderItemInputSerializer(serializers.Serializer):
 
 class OrderCreateSerializer(serializers.Serializer):
     """
-    前端 POST /api/orders/
+    前端 POST /api/restaurants/orders/
 
     body 形状：
     {

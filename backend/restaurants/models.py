@@ -143,7 +143,7 @@ class Item(models.Model):
         blank=True,
         related_name="items",
     )
-    spiciness = models.ForeignKey(
+    spice_levels = models.ForeignKey(
         SpicinessTag,
         null=True,
         blank=True,

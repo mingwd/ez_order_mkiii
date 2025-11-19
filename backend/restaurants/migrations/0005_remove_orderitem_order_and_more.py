@@ -10,22 +10,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveField(
-            model_name='orderitem',
-            name='order',
-        ),
-        migrations.AlterUniqueTogether(
-            name='orderitem',
-            unique_together=None,
-        ),
-        migrations.RemoveField(
-            model_name='orderitem',
-            name='item',
-        ),
-        migrations.DeleteModel(
-            name='Order',
-        ),
-        migrations.DeleteModel(
-            name='OrderItem',
-        ),
+        
     ]

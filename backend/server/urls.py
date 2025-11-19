@@ -10,7 +10,7 @@ urlpatterns = [
     path("healthz", healthz),
     path("api/restaurants/resolve", resolve_restaurants),
     path("api/restaurants/<int:rest_id>/items", items_by_restaurant),
-    path("api/orders/", create_order, name="create_order"),
+    path("api/restaurants/orders/", create_order, name="create_order"),
     path("api/ai_order/", ai_order),
 
     path("api/auth/register/", register_customer),     # 强制注册为 customer

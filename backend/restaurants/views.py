@@ -155,15 +155,16 @@ def create_order(request):
             )
 
         # Spice level
-        for tag in it.spice_levels.all():
+        if it.spice_levels is not None:
             obj, _ = UserSpicePreference.objects.get_or_create(
                 profile=profile,
-                tag=tag,
+                tag=it.spiciness,
                 defaults={"score": 0},
             )
             UserSpicePreference.objects.filter(pk=obj.pk).update(
                 score=F("score") + delta
             )
+
 
         # Meal type
         for tag in it.meal_types.all():
