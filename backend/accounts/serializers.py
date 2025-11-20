@@ -30,6 +30,21 @@ class CustomerRegisterSerializer(serializers.Serializer):
             user.profile.user_type = "customer"
             user.profile.save()
         return user
+    
+class MerchantRegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ["username", "password"]
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data["username"],
+            password=validated_data["password"],
+        )
+        UserProfile.objects.create(user=user, user_type="owner")
+        return user
 
 class MeSerializer(serializers.Serializer):
     username = serializers.CharField()

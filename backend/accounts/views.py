@@ -3,7 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from .serializers import CustomerRegisterSerializer, UserProfileSerializer, MeSerializer
+from .serializers import CustomerRegisterSerializer, UserProfileSerializer, MeSerializer, MerchantRegisterSerializer
 from .models import UserProfile
 from django.contrib.auth.models import User
 
@@ -13,8 +13,18 @@ def register_customer(request):
     s = CustomerRegisterSerializer(data=request.data)
     s.is_valid(raise_exception=True)
     user = s.save()
-    return Response({"ok": True, "username": user.username, "user_type": "customer"}, status=201)
+    return Response({"ok": True, "username": user.username, "user_type": "customer"}, status=status.HTTP_201_CREATED)
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def register_merchant(request):
+    s = MerchantRegisterSerializer(data=request.data)
+    s.is_valid(raise_exception=True)
+    user = s.save()
+    return Response(
+        {"username": user.username, "user_type": "owner"},
+        status=status.HTTP_201_CREATED,
+    )
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

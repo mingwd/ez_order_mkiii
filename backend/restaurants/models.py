@@ -5,6 +5,14 @@ from django.db import models
 
 
 class Restaurant(models.Model):
+    owner = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="owned_restaurants",
+        null=True,
+        blank=True,
+        help_text="Restaurant owner (merchant account). Null for system/public restaurants.",
+    )
     name = models.CharField(max_length=120)
     google_place_id = models.CharField(
         max_length=255,
@@ -22,6 +30,7 @@ class Restaurant(models.Model):
         indexes = [
             models.Index(fields=["is_active"]),
             models.Index(fields=["latitude", "longitude"]),
+            models.Index(fields=["owner", "is_active"]),
         ]
         constraints = [
             models.CheckConstraint(

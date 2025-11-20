@@ -108,3 +108,25 @@ export async function apiPlaceOrder(restaurantId, items) {
     }
     return r.json();
 }
+
+
+export async function apiRegisterMerchant(username, password) {
+    const r = await fetch(`${BASE}/api/auth/merchant/register/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+    });
+    if (!r.ok) throw new Error(await r.text());
+    return r.json();
+}
+
+export async function apiMerchantMyRestaurants() {
+    const r = await fetch(`${BASE}/api/restaurants/merchant/my/`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("merchant my restaurants failed");
+    return r.json();
+}

@@ -7,6 +7,10 @@ import "./index.css";
 import Home from "./pages/Home.jsx";
 import Auth from "./pages/Auth.jsx";
 import Profile from "./pages/Profile.jsx";
+import MerchantAuth from "./pages/MerchantAuth.jsx";
+import MerchantDashboard from "./pages/MerchantDashboard.jsx";
+import MerchantMenu from "./pages/MerchantMenu.jsx";
+import MerchantItemEdit from "./pages/MerchantItemEdit.jsx";
 
 function AppRouter() {
   return (
@@ -15,6 +19,12 @@ function AppRouter() {
         <Route path="/" element={<Home />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/profile" element={<Profile />} />
+
+        {/* 商家相关 */}
+        <Route path="/merchant/auth" element={<MerchantAuth />} />
+        <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
+        <Route path="/merchant/restaurants/:restId/menu" element={<MerchantMenu />} />
+        <Route path="/merchant/items/:itemId/edit" element={<MerchantItemEdit />} />
 
         {/* 404 fallback */}
         <Route

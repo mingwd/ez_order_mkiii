@@ -184,3 +184,22 @@ def create_order(request):
             "updated_prefs": True,
         }
     )
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def merchant_my_restaurants(request):
+    """
+    返回当前登录商家的所有餐厅。
+    """
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if profile.user_type != "owner":
+        return Response({"detail": "Not a merchant account."}, status=status.HTTP_403_FORBIDDEN)
+
+    qs = Restaurant.objects.filter(owner=request.user).order_by("id")
+    data = RestaurantSerializer(qs, many=True).data
+    return Response({"restaurants": data})
