@@ -32,17 +32,24 @@ export default function Home() {
     // orderSuccess 结构：
     // { orderId, totalPrice, restaurantName, items: [...], aiMessage? }
 
+    const [userChecked, setUserChecked] = useState(false); // 新增，用来知道已经检查过了
+
     // 页面加载时尝试恢复登录状态
     useEffect(() => {
         (async () => {
             const token = localStorage.getItem("access");
-            if (!token) return;
+            if (!token) {
+                setUserChecked(true);
+                return;
+            }
             try {
                 const me = await apiMe();
                 setUser(me);
             } catch {
                 localStorage.removeItem("access");
                 localStorage.removeItem("refresh");
+            } finally {
+                setUserChecked(true);
             }
         })();
     }, []);
@@ -102,6 +109,47 @@ export default function Home() {
         if (r) openMenu(r);
         else console.log("Marker clicked but not in resolved list:", placeId);
     }, []);
+
+    function handleLogout() {
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+        setUser(null);
+    }
+
+    if (!userChecked) {
+        return (
+            <div className="w-screen h-screen flex items-center justify-center bg-gray-50">
+                Loading…
+            </div>
+        );
+    }
+
+    if (user && user.user_type === "owner") {
+        return (
+            <div className="w-screen h-screen bg-gray-50 flex flex-col items-center justify-center">
+                <div className="bg-white rounded-2xl shadow-md border px-8 py-6 text-center max-w-lg">
+                    <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+                        You are logged in as <span className="text-orange-500">merchant</span>
+                    </h1>
+                    <p className="text-sm text-gray-600 mb-4">
+                        Customer ordering is disabled for merchant accounts.
+                        <br />
+                        Please go to the merchant dashboard to manage your restaurants & menus.
+                    </p>
+
+                    <div className="flex items-center justify-center gap-3 mt-2">
+
+                        <button
+                            className="px-4 py-2 rounded-lg border hover:bg-gray-100 text-sm text-gray-700"
+                            onClick={handleLogout}
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     async function openMenu(r) {
         setActive(r);

@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import F
 from .models import Restaurant, Item
-from .serializers import RestaurantSerializer, ItemSerializer, OrderCreateSerializer
+from .serializers import RestaurantSerializer, ItemSerializer, OrderCreateSerializer, MerchantItemDetailSerializer, MerchantItemCreateSerializer
 from accounts.models import (
     UserProfile,
     UserCuisinePreference,
@@ -203,3 +203,101 @@ def merchant_my_restaurants(request):
     qs = Restaurant.objects.filter(owner=request.user).order_by("id")
     data = RestaurantSerializer(qs, many=True).data
     return Response({"restaurants": data})
+
+
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def merchant_item_detail(request, item_id):
+    """
+    商家查看 / 编辑自己名下餐厅的某个 Item。
+    URL: /api/merchant/items/<item_id>/
+
+    GET: 返回详情（含所有 tag）
+    PUT: 更新 name/description/price/is_active + 各类 tag
+    """
+    user = request.user
+
+    # 验证用户类型（你现在的 user_type 可能叫 "merchant" 或 "owner"，都放进来）
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found"}, status=status.HTTP_403_FORBIDDEN)
+
+    if profile.user_type not in ("merchant", "owner"):
+        return Response({"detail": "Only merchant users can edit items."},
+                        status=status.HTTP_403_FORBIDDEN)
+
+    # 只允许操作自己名下餐厅的菜品
+    try:
+        item = (
+            Item.objects
+            .select_related("restaurant")
+            .prefetch_related(
+                "cuisines",
+                "proteins",
+                "meal_types",
+                "flavors",
+                "allergens",
+                "nutritions",
+            )
+            .get(
+                id=item_id,
+                restaurant__owner=user,  # ⚠️ 这里假设 Restaurant 有 owner=FK(User)
+            )
+        )
+    except Item.DoesNotExist:
+        return Response({"detail": "Item not found."}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        ser = MerchantItemDetailSerializer(item)
+        return Response(ser.data)
+
+    # PUT 更新
+    ser = MerchantItemDetailSerializer(item, data=request.data, partial=True)
+    if not ser.is_valid():
+        return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    ser.save()
+    return Response(ser.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def merchant_create_item(request, rest_id):
+    """
+    商家给某家自己的餐厅新建 Item。
+    URL: POST /api/merchant/restaurants/<rest_id>/items/
+    body: 同 MerchantItemCreateSerializer 的字段（name / price / tags...）
+    """
+    user = request.user
+
+    # 校验 user_type
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found"}, status=status.HTTP_403_FORBIDDEN)
+
+    if profile.user_type not in ("merchant", "owner"):
+        return Response(
+            {"detail": "Only merchant users can create items."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    # 只允许给自己名下餐厅建单品
+    try:
+        restaurant = Restaurant.objects.get(id=rest_id, owner=user)
+    except Restaurant.DoesNotExist:
+        return Response(
+            {"detail": "Restaurant not found or not owned by you."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    ser = MerchantItemCreateSerializer(data=request.data)
+    if not ser.is_valid():
+        return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    item = ser.save(restaurant=restaurant)
+
+    # 返回 detail 版，省得前端再打一次 GET
+    out = MerchantItemDetailSerializer(item)
+    return Response(out.data, status=status.HTTP_201_CREATED)

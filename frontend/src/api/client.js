@@ -18,7 +18,7 @@ export async function apiItems(restId) {
 }
 
 export async function apiAiOrder() {
-    const r = await fetch(`${BASE}/api/ai_order/`, { method: "POST" });
+    const r = await fetch(`${BASE}/api/restaurants/ai_order/`, { method: "POST" });
     if (!r.ok) throw new Error("AI order failed");
     return r.json();
 }
@@ -121,12 +121,59 @@ export async function apiRegisterMerchant(username, password) {
 }
 
 export async function apiMerchantMyRestaurants() {
-    const r = await fetch(`${BASE}/api/restaurants/merchant/my/`, {
+    const r = await fetch(`${BASE}/api/merchant/restaurants/my/`, {
         headers: {
             "Content-Type": "application/json",
             ...authHeaders(),
         },
     });
-    if (!r.ok) throw new Error("merchant my restaurants failed");
+    if (r.status === 401) {
+        throw new Error("unauthorized");
+    }
+    if (!r.ok) throw new Error("merchant restaurants failed");
+    return r.json();
+}
+
+export async function apiMerchantGetItem(itemId) {
+    const r = await fetch(`${BASE}/api/merchant/items/${itemId}/`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("merchant get item failed");
+    return r.json();
+}
+
+// 更新单个菜品
+export async function apiMerchantUpdateItem(itemId, payload) {
+    const r = await fetch(`${BASE}/api/merchant/items/${itemId}/`, {
+        method: "PUT",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error("merchant update item failed");
+    return r.json();
+}
+
+
+export async function apiMerchantRestaurantItems(restId) {
+    // 目前先直接复用客户端的 items 接口
+    return apiItems(restId);
+}
+
+export async function apiMerchantCreateItem(restId, payload) {
+    const r = await fetch(`${BASE}/api/merchant/restaurants/${restId}/items/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(payload),
+    });
+    if (!r.ok) throw new Error("merchant create item failed");
     return r.json();
 }

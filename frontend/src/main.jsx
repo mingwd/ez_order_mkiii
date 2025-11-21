@@ -24,7 +24,15 @@ function AppRouter() {
         <Route path="/merchant/auth" element={<MerchantAuth />} />
         <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
         <Route path="/merchant/restaurants/:restId/menu" element={<MerchantMenu />} />
-        <Route path="/merchant/items/:itemId/edit" element={<MerchantItemEdit />} />
+        <Route
+          path="/merchant/items/:itemId/edit"
+          element={<MerchantItemEdit mode="edit" />}
+        />
+        <Route
+          path="/merchant/restaurants/:restId/items/new"
+          element={<MerchantItemEdit mode="create" />}
+        />
+
 
         {/* 404 fallback */}
         <Route

@@ -2,7 +2,7 @@
 
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Restaurant, Item, Order, OrderItem
+from .models import Restaurant, Item, Order, OrderItem, CuisineTag, ProteinTag, SpicinessTag, MealTypeTag, FlavorTag, AllergenTag, NutritionTag
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
@@ -142,4 +142,115 @@ class OrderSerializer(serializers.ModelSerializer):
             "total_price",
             "created_at",
             "items",
+        ]
+
+class MerchantItemDetailSerializer(serializers.ModelSerializer):
+    cuisines = serializers.PrimaryKeyRelatedField(
+        queryset=CuisineTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    proteins = serializers.PrimaryKeyRelatedField(
+        queryset=ProteinTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    spiciness = serializers.PrimaryKeyRelatedField(
+        queryset=SpicinessTag.objects.all(),
+        required=False,
+        allow_null=True,
+    )
+    meal_types = serializers.PrimaryKeyRelatedField(
+        queryset=MealTypeTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    flavors = serializers.PrimaryKeyRelatedField(
+        queryset=FlavorTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    allergens = serializers.PrimaryKeyRelatedField(
+        queryset=AllergenTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    nutritions = serializers.PrimaryKeyRelatedField(
+        queryset=NutritionTag.objects.all(),
+        many=True,
+        required=False,
+    )
+
+    class Meta:
+        model = Item
+        fields = [
+            "id",
+            "restaurant",
+            "name",
+            "description",
+            "price",
+            "is_active",
+            "created_at",
+            "cuisines",
+            "proteins",
+            "spiciness",
+            "meal_types",
+            "flavors",
+            "allergens",
+            "nutritions",
+        ]
+        read_only_fields = ["id", "restaurant", "created_at"]
+
+
+class MerchantItemCreateSerializer(serializers.ModelSerializer):
+    cuisines = serializers.PrimaryKeyRelatedField(
+        queryset=CuisineTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    proteins = serializers.PrimaryKeyRelatedField(
+        queryset=ProteinTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    spiciness = serializers.PrimaryKeyRelatedField(
+        queryset=SpicinessTag.objects.all(),
+        allow_null=True,
+        required=False,
+    )
+    meal_types = serializers.PrimaryKeyRelatedField(
+        queryset=MealTypeTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    flavors = serializers.PrimaryKeyRelatedField(
+        queryset=FlavorTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    allergens = serializers.PrimaryKeyRelatedField(
+        queryset=AllergenTag.objects.all(),
+        many=True,
+        required=False,
+    )
+    nutritions = serializers.PrimaryKeyRelatedField(
+        queryset=NutritionTag.objects.all(),
+        many=True,
+        required=False,
+    )
+
+    class Meta:
+        model = Item
+        fields = [
+            "name",
+            "description",
+            "price",
+            "is_active",
+            "cuisines",
+            "proteins",
+            "spiciness",
+            "meal_types",
+            "flavors",
+            "allergens",
+            "nutritions",
         ]
