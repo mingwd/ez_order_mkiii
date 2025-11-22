@@ -2,7 +2,19 @@
 
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Restaurant, Item, Order, OrderItem, CuisineTag, ProteinTag, SpicinessTag, MealTypeTag, FlavorTag, AllergenTag, NutritionTag
+from .models import (
+    Restaurant, 
+    Item, 
+    Order, 
+    OrderItem, 
+    CuisineTag, 
+    ProteinTag, 
+    SpicinessTag, 
+    MealTypeTag, 
+    FlavorTag, 
+    AllergenTag, 
+    NutritionTag
+    )
 
 
 class RestaurantSerializer(serializers.ModelSerializer):
@@ -159,6 +171,7 @@ class MerchantItemDetailSerializer(serializers.ModelSerializer):
         queryset=SpicinessTag.objects.all(),
         required=False,
         allow_null=True,
+        source="spice_levels",
     )
     meal_types = serializers.PrimaryKeyRelatedField(
         queryset=MealTypeTag.objects.all(),
@@ -202,6 +215,8 @@ class MerchantItemDetailSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "restaurant", "created_at"]
 
 
+
+
 class MerchantItemCreateSerializer(serializers.ModelSerializer):
     cuisines = serializers.PrimaryKeyRelatedField(
         queryset=CuisineTag.objects.all(),
@@ -217,6 +232,7 @@ class MerchantItemCreateSerializer(serializers.ModelSerializer):
         queryset=SpicinessTag.objects.all(),
         allow_null=True,
         required=False,
+        source="spice_levels",
     )
     meal_types = serializers.PrimaryKeyRelatedField(
         queryset=MealTypeTag.objects.all(),

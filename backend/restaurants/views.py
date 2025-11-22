@@ -3,8 +3,25 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
 from django.db.models import F
-from .models import Restaurant, Item
-from .serializers import RestaurantSerializer, ItemSerializer, OrderCreateSerializer, MerchantItemDetailSerializer, MerchantItemCreateSerializer
+from .models import (
+    Restaurant, 
+    Item,
+    CuisineTag,
+    ProteinTag,
+    SpicinessTag,
+    MealTypeTag,
+    FlavorTag,
+    AllergenTag,
+    NutritionTag,
+)
+from .serializers import (
+    RestaurantSerializer, 
+    ItemSerializer, 
+    OrderCreateSerializer, 
+    MerchantItemDetailSerializer, 
+    MerchantItemCreateSerializer
+)
+
 from accounts.models import (
     UserProfile,
     UserCuisinePreference,
@@ -158,7 +175,7 @@ def create_order(request):
         if it.spice_levels is not None:
             obj, _ = UserSpicePreference.objects.get_or_create(
                 profile=profile,
-                tag=it.spiciness,
+                tag=it.spice_levels,
                 defaults={"score": 0},
             )
             UserSpicePreference.objects.filter(pk=obj.pk).update(
@@ -301,3 +318,76 @@ def merchant_create_item(request, rest_id):
     # 返回 detail 版，省得前端再打一次 GET
     out = MerchantItemDetailSerializer(item)
     return Response(out.data, status=status.HTTP_201_CREATED)
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def merchant_tags_overview(request):
+    """
+    商家端：拿到所有 tag 选项，用来渲染多选按钮。
+    URL: /api/merchant/tags/
+    """
+    user = request.user
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found"}, status=status.HTTP_403_FORBIDDEN)
+
+    if profile.user_type not in ("merchant", "owner"):
+        return Response(
+            {"detail": "Only merchant users can access tags."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    def qs_to_list(qs):
+        return [
+            {"id": t.id, "key": t.key, "label": t.label}
+            for t in qs.order_by("label")
+        ]
+
+    data = {
+        "cuisines": qs_to_list(CuisineTag.objects.all()),
+        "proteins": qs_to_list(ProteinTag.objects.all()),
+        "spiciness": qs_to_list(SpicinessTag.objects.all()),
+        "meal_types": qs_to_list(MealTypeTag.objects.all()),
+        "flavors": qs_to_list(FlavorTag.objects.all()),
+        "allergens": qs_to_list(AllergenTag.objects.all()),
+        "nutritions": qs_to_list(NutritionTag.objects.all()),
+    }
+    return Response(data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def merchant_tags_overview(request):
+    """
+    商家端：拿到所有 tag 选项，用来渲染多选按钮。
+    URL: /api/merchant/tags/
+    """
+    user = request.user
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found"}, status=status.HTTP_403_FORBIDDEN)
+
+    if profile.user_type not in ("merchant", "owner"):
+        return Response(
+            {"detail": "Only merchant users can access tags."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    def qs_to_list(qs):
+        return [
+            {"id": t.id, "key": t.key, "label": t.label}
+            for t in qs.order_by("label")
+        ]
+
+    data = {
+        "cuisines": qs_to_list(CuisineTag.objects.all()),
+        "proteins": qs_to_list(ProteinTag.objects.all()),
+        "spiciness": qs_to_list(SpicinessTag.objects.all()),
+        "meal_types": qs_to_list(MealTypeTag.objects.all()),
+        "flavors": qs_to_list(FlavorTag.objects.all()),
+        "allergens": qs_to_list(AllergenTag.objects.all()),
+        "nutritions": qs_to_list(NutritionTag.objects.all()),
+    }
+    return Response(data)

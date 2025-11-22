@@ -54,7 +54,7 @@ export default function MerchantMenu() {
                         Back
                     </button>
                     <button
-                        className="px-4 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-gray-900"
+                        className="px-4 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-white-900"
                         onClick={() =>
                             nav(
                                 `/merchant/restaurants/${restId}/items/new`

@@ -177,3 +177,14 @@ export async function apiMerchantCreateItem(restId, payload) {
     if (!r.ok) throw new Error("merchant create item failed");
     return r.json();
 }
+
+export async function apiMerchantTags() {
+    const r = await fetch(`${BASE}/api/merchant/tags/`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("merchant tags failed");
+    return r.json();
+}
