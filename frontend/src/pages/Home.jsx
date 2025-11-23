@@ -151,6 +151,46 @@ export default function Home() {
         );
     }
 
+    async function handleAiOrderClick() {
+        // 需要登录
+        if (!user) {
+            setLoginPromptOpen(true);
+            return;
+        }
+        if (!rests || rests.length === 0) {
+            alert("附近没有可用餐厅，地图先走一圈再试。");
+            return;
+        }
+
+        try {
+            const ids = rests.map((r) => r.id);
+            const resp = await apiAiOrder(ids);
+            // resp: { order_id, restaurant_id, restaurant_name, items, total_price, ai_comment }
+
+            // 把返回的 items 适配到你现有的 orderSuccess 格式
+            const summaryItems = resp.items.map((it) => ({
+                restaurantId: resp.restaurant_id,
+                itemId: it.item_id,
+                name: it.name,
+                qty: it.quantity,
+                price: Number(it.price),
+                restaurantName: resp.restaurant_name,
+            }));
+
+            setOrderSuccess({
+                orderId: resp.order_id,
+                totalPrice: resp.total_price,
+                restaurantName: resp.restaurant_name,
+                items: summaryItems,
+                aiMessage: resp.ai_comment,
+            });
+        } catch (e) {
+            console.error(e);
+            alert(e.message || "AI order failed.");
+        }
+    }
+
+
     async function openMenu(r) {
         setActive(r);
         setItems([]);
@@ -268,15 +308,6 @@ export default function Home() {
         }
     }
 
-    // ---- Order for me：先用 OpenAI 随便说句话 ----
-    async function handleAiOrderClick() {
-        try {
-            const d = await apiAiOrder();
-            alert(d.message || "AI 没说话 😂");
-        } catch (e) {
-            alert("AI order failed: " + e.message);
-        }
-    }
 
     // ---- Auth 提交（弹窗版，目前主要在 /auth 页面用，这里逻辑先留着）----
     async function handleAuthSubmit(e) {

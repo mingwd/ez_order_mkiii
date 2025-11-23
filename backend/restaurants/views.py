@@ -1,3 +1,7 @@
+import json
+import os
+from decimal import Decimal
+from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -33,8 +37,109 @@ from accounts.models import (
     UserAllergenPreference,
 )
 
-import os
 from openai import OpenAI
+
+def pref_qs_to_list(qs, label_attr="tag__label"):
+    # 返回按 score 降序的数组：[{ "label": xxx, "score": 5 }, ...]
+    return [
+        {
+            "label": getattr(row, label_attr.split("__")[0]).label,
+            "score": row.score,
+        }
+        for row in qs.order_by("-score")
+    ]
+
+
+def build_user_context(profile: UserProfile):
+    return {
+        "basic": {
+            "height_cm": profile.height_cm,
+            "weight_kg": profile.weight_kg,
+            "age": profile.age,
+            "gender": profile.gender,
+            "activity_level": profile.activity_level,
+            "memo": profile.memo,
+        },
+        "preferences": {
+            "cuisines": pref_qs_to_list(
+                UserCuisinePreference.objects.filter(profile=profile)
+            ),
+            "flavors": pref_qs_to_list(
+                UserFlavorPreference.objects.filter(profile=profile)
+            ),
+            "nutritions": pref_qs_to_list(
+                UserNutritionPreference.objects.filter(profile=profile)
+            ),
+            "proteins": pref_qs_to_list(
+                UserProteinPreference.objects.filter(profile=profile)
+            ),
+            "spice_levels": pref_qs_to_list(
+                UserSpicePreference.objects.filter(profile=profile),
+                label_attr="tag__label",
+            ),
+            "meal_types": pref_qs_to_list(
+                UserMealTypePreference.objects.filter(profile=profile)
+            ),
+            "allergens": pref_qs_to_list(
+                UserAllergenPreference.objects.filter(profile=profile)
+            ),
+        },
+    }
+
+def build_restaurant_bundle(restaurants_qs):
+    """
+    把候选餐厅 + 菜单 + 各种 tag 打成一个纯 Python dict，方便 json.dumps 丢给 LLM。
+    """
+    items_qs = (
+        Item.objects.filter(restaurant__in=restaurants_qs, is_active=True)
+        .select_related("restaurant", "spice_levels")
+        .prefetch_related(
+            "cuisines",
+            "proteins",
+            "meal_types",
+            "flavors",
+            "allergens",
+            "nutritions",
+        )
+    )
+
+    # 先按餐厅分组
+    items_by_rest = {}
+    for it in items_qs:
+        items_by_rest.setdefault(it.restaurant_id, []).append(it)
+
+    bundle = []
+    for rest in restaurants_qs:
+        rest_items = []
+        for it in items_by_rest.get(rest.id, []):
+            rest_items.append(
+                {
+                    "id": it.id,
+                    "name": it.name,
+                    "price": float(it.price),
+                    "tags": {
+                        "cuisines": [t.label for t in it.cuisines.all()],
+                        "proteins": [t.label for t in it.proteins.all()],
+                        "spiciness": it.spice_levels.label if it.spice_levels else None,
+                        "meal_types": [t.label for t in it.meal_types.all()],
+                        "flavors": [t.label for t in it.flavors.all()],
+                        "allergens": [t.label for t in it.allergens.all()],
+                        "nutritions": [t.label for t in it.nutritions.all()],
+                    },
+                }
+            )
+
+        bundle.append(
+            {
+                "id": rest.id,
+                "name": rest.name,
+                "address": rest.address,
+                "items": rest_items,
+            }
+        )
+
+    return bundle
+
 
 @api_view(["POST"])
 def resolve_restaurants(request):
@@ -77,21 +182,173 @@ def items_by_restaurant(request, rest_id):
     return Response({"items": data})
 
 @api_view(["POST"])
+@permission_classes([IsAuthenticated])
 def ai_order(request):
-    try:
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-        completion = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "user", "content": "Say one funny sentence about food."}
-            ]
+    """
+    智能点餐：
+    前端传入当前“台面上的”餐厅 ID 列表，后端：
+    1. 取用户 profile + 偏好
+    2. 取这些餐厅的菜单 + tag
+    3. 丢给 OpenAI 让它返回 {restaurant_id, items[], comment}
+    4. 用 OrderCreateSerializer 真正创建订单
+    5. 返回 order 信息 + AI comment
+    """
+    restaurant_ids = request.data.get("restaurant_ids", [])
+    if not isinstance(restaurant_ids, list) or not restaurant_ids:
+        return Response(
+            {"detail": "restaurant_ids must be a non-empty list."},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-        reply = completion.choices[0].message.content
-        return Response({"message": reply})
-    except Exception as e:
-        return Response({"error": str(e)}, status=500)
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return Response(
+            {"detail": "User profile not found."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 只取 is_active 的餐厅
+    restaurants = Restaurant.objects.filter(
+        id__in=restaurant_ids, is_active=True
+    ).order_by("id")
+
+    if not restaurants.exists():
+        return Response(
+            {"detail": "No valid restaurants found."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user_ctx = build_user_context(profile)
+    rest_bundle = build_restaurant_bundle(restaurants)
+
+    # ===== 调 OpenAI =====
+    client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+    system_prompt = """
+You are a food-ordering assistant. You will receive a JSON containing:
+user: the user’s basic information and historical preferences (a higher score for a tag means the user likes it more)
+restaurants: the list of available restaurants and their menus; each dish has a name, price, and several tags
+Your tasks:
+Only choose from the provided restaurants and items. Do NOT invent new IDs or dish names.
+Pick one restaurant, and select 1–3 dishes from that restaurant.
+Try to match the user’s taste preferences as much as possible
+(cuisines / flavors / spice_levels / proteins / nutritions).
+Avoid allergens that are obviously unsuitable for the user. If information is insufficient, you may ignore allergens.
+Keep the total price reasonable (for example, don’t order 10 items for one person).
+You must return the result in the following JSON schema exactly as shown, without adding extra fields:
+{
+  "restaurant_id": <int, must be one of the restaurants in the input>,
+  "items": [
+    { "item_id": <int, must belong to the chosen restaurant>, "quantity": <int, 1-3> }
+  ],
+  "comment": "<Briefly explain of why you chose this order>"
+}
+
+}
+    """.strip()
+
+    user_payload = {
+        "user": user_ctx,
+        "restaurants": rest_bundle,
+    }
+
+    completion = client.chat.completions.create(
+        model="gpt-4o-mini",
+        response_format={"type": "json_object"},
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {
+                "role": "user",
+                "content": json.dumps(user_payload, ensure_ascii=False, default=float),
+            },
+        ],
+    )
+
+    raw = completion.choices[0].message.content
+    try:
+        ai_result = json.loads(raw)
+    except json.JSONDecodeError:
+        return Response(
+            {"detail": "AI returned invalid JSON.", "raw": raw},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+
+    # ==== 基本校验 ====
+    rest_id = ai_result.get("restaurant_id")
+    items = ai_result.get("items") or []
+    comment = ai_result.get("comment", "")
+
+    if rest_id not in restaurant_ids:
+        return Response(
+            {"detail": "AI chose an invalid restaurant_id.", "ai_result": ai_result},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # 校验 item 是否属于这家餐厅
+    valid_items_qs = Item.objects.filter(
+        restaurant_id=rest_id, id__in=[x.get("item_id") for x in items]
+    ).select_related("restaurant")
+
+    valid_ids = set(valid_items_qs.values_list("id", flat=True))
+    cleaned_items = []
+    for it in items:
+        iid = it.get("item_id")
+        qty = it.get("quantity", 1) or 1
+        if iid in valid_ids and qty > 0:
+            cleaned_items.append({"item_id": iid, "quantity": int(qty)})
+
+    if not cleaned_items:
+        return Response(
+            {"detail": "AI did not pick any valid items.", "ai_result": ai_result},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # ===== 真正创建订单 =====
+    payload = {
+        "restaurant_id": rest_id,
+        "items": cleaned_items,
+    }
+    serializer = OrderCreateSerializer(
+        data=payload,
+        context={"request": request},
+    )
+    serializer.is_valid(raise_exception=True)
+
+    with transaction.atomic():
+        order = serializer.save()
+
+    # 重新读一遍订单明细，方便前端展示
+    order_items = (
+        order.items.select_related("item", "item__restaurant")
+        .all()
+        .order_by("id")
+    )
+
+    out_items = []
+    total = Decimal("0.00")
+    for oi in order_items:
+        line_total = oi.price_at_order * oi.quantity
+        total += line_total
+        out_items.append(
+            {
+                "item_id": oi.item_id,
+                "name": oi.item.name,
+                "quantity": oi.quantity,
+                "price": str(oi.price_at_order),
+                "line_total": str(line_total),
+            }
+        )
+
+    resp_data = {
+        "order_id": order.id,
+        "restaurant_id": rest_id,
+        "restaurant_name": order.restaurant.name,
+        "items": out_items,
+        "total_price": str(total),
+        "ai_comment": comment,
+    }
+    return Response(resp_data, status=status.HTTP_201_CREATED)
     
 
 @api_view(["POST"])

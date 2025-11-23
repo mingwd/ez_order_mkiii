@@ -17,10 +17,24 @@ export async function apiItems(restId) {
     return r.json();
 }
 
-export async function apiAiOrder() {
-    const r = await fetch(`${BASE}/api/restaurants/ai_order/`, { method: "POST" });
-    if (!r.ok) throw new Error("AI order failed");
-    return r.json();
+export async function apiAiOrder(restaurantIds) {
+    const token = localStorage.getItem("access");
+    const resp = await fetch("http://127.0.0.1:8000/api/restaurants/ai_order/", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+            restaurant_ids: restaurantIds,   // [1, 2, 3]
+        }),
+    });
+
+    if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
+        throw new Error(data.detail || data.error || "AI order failed");
+    }
+    return resp.json();
 }
 
 function authHeaders() {
