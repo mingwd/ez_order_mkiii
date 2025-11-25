@@ -20,7 +20,7 @@ function AppRouter() {
         <Route path="/auth" element={<Auth />} />
         <Route path="/profile" element={<Profile />} />
 
-        {/* 商家相关 */}
+        {/* merchant */}
         <Route path="/merchant/auth" element={<MerchantAuth />} />
         <Route path="/merchant/dashboard" element={<MerchantDashboard />} />
         <Route path="/merchant/restaurants/:restId/menu" element={<MerchantMenu />} />

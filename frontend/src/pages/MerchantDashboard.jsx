@@ -43,7 +43,7 @@ export default function MerchantDashboard() {
                 {rests.map((r) => (
                     <div
                         key={r.id}
-                        className="bg-white border shadow-sm rounded-xl p-5 flex justify-between items-start"
+                        className="bg-white shadow-md rounded-xl p-5 flex justify-between items-start"
                     >
                         <div>
                             <div className="text-lg font-semibold text-gray-800">
@@ -55,7 +55,6 @@ export default function MerchantDashboard() {
                         </div>
 
                         <button
-                            className="px-4 py-2 bg-orange-300 hover:bg-orange-400 rounded-lg text-sm font-medium text-gray-900"
                             onClick={() =>
                                 nav(`/merchant/restaurants/${r.id}/menu`, {
                                     state: { restaurant: r },

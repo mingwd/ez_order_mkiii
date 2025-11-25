@@ -10,7 +10,7 @@ export default function Profile() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState("");
 
-    // 记录“本次编辑中点击过要 mute 的 tag”
+    // tags to mute”
     const [muted, setMuted] = useState({
         cuisines: new Set(),
         flavors: new Set(),
@@ -26,7 +26,7 @@ export default function Profile() {
             try {
                 const d = await apiGetProfile();
                 setData(d);
-                // 每次加载 profile，重置本地 muted 状态
+                // reset muted tags on load
                 setMuted({
                     cuisines: new Set(),
                     flavors: new Set(),
@@ -51,11 +51,11 @@ export default function Profile() {
     function toggleTag(type, id) {
         setMuted((prev) => {
             const next = { ...prev };
-            const set = new Set(prev[type]); // 拷贝一个新 Set 触发重渲染
+            const set = new Set(prev[type]); // re-rendre
             if (set.has(id)) {
-                set.delete(id); // 再次点击就恢复（不再 mute）
+                set.delete(id); // unmute on second click
             } else {
-                set.add(id);    // 第一次点击 → 标记为 mute
+                set.add(id);    // first click → mute
             }
             next[type] = set;
             return next;
@@ -77,7 +77,7 @@ export default function Profile() {
                 activity_level: data.activity_level,
                 memo: data.memo,
 
-                // 这些数组告诉后端：本次哪些 tag 要把 score 置 0
+                // tag score reset
                 muted_cuisine_ids: Array.from(muted.cuisines),
                 muted_flavor_ids: Array.from(muted.flavors),
                 muted_nutrition_ids: Array.from(muted.nutritions),
@@ -90,7 +90,7 @@ export default function Profile() {
             const updated = await apiUpdateProfile(payload);
             setData(updated);
 
-            // 保存成功后，清空本次编辑的 mute 状态
+            // clear muted tags after save
             setMuted({
                 cuisines: new Set(),
                 flavors: new Set(),
@@ -148,12 +148,12 @@ export default function Profile() {
         "bg-gray-100 border-gray-300 text-gray-400 line-through hover:bg-gray-100";
 
     return (
-        <div className="w-screen min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-            {/* 顶部信息卡片 */}
-            <div className="bg-white w-full max-w-3xl rounded-xl shadow-md p-6 mb-6 border">
+        <div className="w-screen min-h-screen p-6 flex flex-col items-center">
+            {/* Top */}
+            <div className="bg-white w-full max-w-3xl rounded-xl shadow-md p-6 mb-6">
                 <h1 className="text-2xl font-semibold text-gray-800">Profile</h1>
                 <p className="text-sm text-gray-500 mt-1">
-                    Customer information & preferences
+                    Bio information & preferences
                 </p>
 
                 <div className="mt-4 space-y-2 text-sm text-gray-900">
@@ -163,7 +163,7 @@ export default function Profile() {
                     </div>
                     <div>
                         <strong className="text-gray-700">User Type:</strong>{" "}
-                        {data.user_type || "customer"}
+                        {data.user_type}
                     </div>
                 </div>
             </div>
@@ -172,8 +172,8 @@ export default function Profile() {
                 onSubmit={handleSave}
                 className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl"
             >
-                {/* 左侧：基础信息 */}
-                <div className="bg-white rounded-xl shadow-md p-6 border space-y-3">
+                {/* Left */}
+                <div className="bg-white rounded-xl shadow-md p-6 space-y-3">
                     <h2 className="text-lg font-semibold text-gray-800">Basic</h2>
 
                     <div className="space-y-2 text-sm">
@@ -182,7 +182,7 @@ export default function Profile() {
                                 Height (cm)
                             </label>
                             <input
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900"
+                                className="w-full"
                                 value={data.height_cm ?? ""}
                                 onChange={(e) =>
                                     handleFieldChange("height_cm", e.target.value)
@@ -195,7 +195,7 @@ export default function Profile() {
                                 Weight (kg)
                             </label>
                             <input
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900"
+                                className="w-full"
                                 value={data.weight_kg ?? ""}
                                 onChange={(e) =>
                                     handleFieldChange("weight_kg", e.target.value)
@@ -208,7 +208,7 @@ export default function Profile() {
                                 Age
                             </label>
                             <input
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900"
+                                className="w-full"
                                 value={data.age ?? ""}
                                 onChange={(e) =>
                                     handleFieldChange("age", e.target.value)
@@ -221,7 +221,7 @@ export default function Profile() {
                                 Gender
                             </label>
                             <select
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900"
+                                className="w-full"
                                 value={data.gender ?? ""}
                                 onChange={(e) =>
                                     handleFieldChange("gender", e.target.value)
@@ -239,7 +239,7 @@ export default function Profile() {
                                 Activity Level
                             </label>
                             <select
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900"
+                                className="w-full"
                                 value={data.activity_level ?? ""}
                                 onChange={(e) =>
                                     handleFieldChange("activity_level", e.target.value)
@@ -254,26 +254,26 @@ export default function Profile() {
                         </div>
 
                         <div className="text-xs text-gray-500">
-                            BMR (calculated later): {data.bmr ?? "—"}
+                            BMR (calculated): {data.bmr ?? "—"}
                         </div>
                     </div>
                 </div>
 
-                {/* 右侧：Memo */}
-                <div className="bg-white rounded-xl shadow-md p-6 border space-y-3">
+                {/* Right：Memo */}
+                <div className="bg-white rounded-xl shadow-md p-6 space-y-3">
                     <h2 className="text-lg font-semibold text-gray-800">Memo</h2>
                     <p className="text-xs text-gray-500">
                         Diet notes / restrictions / anything you want the AI to know.
                     </p>
                     <textarea
-                        className="text-gray-900 w-full min-h-[160px] border rounded-lg px-3 py-2 text-sm"
+                        className="text-gray-900 w-full min-h-[160px] shadow-md rounded-lg px-3 py-2 text-sm"
                         value={data.memo ?? ""}
                         onChange={(e) => handleFieldChange("memo", e.target.value)}
                     />
                 </div>
 
-                {/* 偏好标签：点击 → 本地变灰，Save → score 置 0 */}
-                <div className="bg-white rounded-xl shadow-md p-6 border md:col-span-2 space-y-3">
+                {/* Pref tags */}
+                <div className="bg-white rounded-xl shadow-md p-6 md:col-span-2 space-y-3">
                     <h2 className="text-lg font-semibold text-gray-800">
                         Preferences (click to mute)
                     </h2>
@@ -283,7 +283,7 @@ export default function Profile() {
                         — it will be muted (score = 0) after you save.
                     </p>
 
-                    {/* 每一类只展示“有的” */}
+                    {/* only show existing tags */}
                     {prefs.cuisines?.length > 0 && (
                         <div className="mb-2">
                             <div className="text-xs font-semibold text-gray-600 mb-1">
@@ -480,7 +480,7 @@ export default function Profile() {
                         )}
                 </div>
 
-                {/* 底部按钮 */}
+                {/* Bot */}
                 <div className="md:col-span-2 flex justify-between items-center mt-2">
                     <div className="text-xs text-red-600">{error}</div>
                     <div className="flex gap-3">

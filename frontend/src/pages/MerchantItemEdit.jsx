@@ -223,7 +223,7 @@ export default function MerchantItemEdit({ mode }) {
 
     return (
         <div className="w-screen min-h-screen bg-gray-50 flex justify-center p-6">
-            <div className="w-full max-w-3xl bg-white rounded-xl shadow-md border p-6">
+            <div className="w-full max-w-3xl bg-white rounded-xl shadow-md p-6">
                 <h1 className="text-2xl font-semibold text-gray-800 mb-2">
                     {title}
                 </h1>
@@ -240,14 +240,13 @@ export default function MerchantItemEdit({ mode }) {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* 基础信息 */}
                     <div className="space-y-4">
                         <div>
                             <label className="block text-xs text-gray-600 mb-1">
                                 Name
                             </label>
                             <input
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
+                                className="w-full"
                                 value={form.name}
                                 onChange={(e) =>
                                     handleFieldChange("name", e.target.value)
@@ -309,7 +308,7 @@ export default function MerchantItemEdit({ mode }) {
                         </div>
                     </div>
 
-                    {/* Tag 选择区域 */}
+                    {/* Tag Select */}
                     <div className="border-t pt-4 space-y-4">
                         <h2 className="text-sm font-semibold text-gray-800">
                             Tags

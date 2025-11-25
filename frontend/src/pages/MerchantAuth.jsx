@@ -14,7 +14,7 @@ export default function MerchantAuth() {
     async function handleSubmit(e) {
         e.preventDefault();
         if (!username || !password) {
-            setErr("Username / password 不能为空");
+            setErr("Username / password can not be empty");
             return;
         }
 
@@ -23,23 +23,23 @@ export default function MerchantAuth() {
             setLoading(true);
 
             if (mode === "signup") {
-                // 创建 merchant 账号
+                // create account
                 await apiRegisterMerchant(username, password);
             }
 
-            // 登录（无论是刚注册还是已有账号）
+            // login
             await apiLogin(username, password);
             const me = await apiMe();
 
             if (me.user_type !== "owner") {
-                // 防止拿 customer 账号来登录商家后台
+                // customer account, logout immediately
                 localStorage.removeItem("access");
                 localStorage.removeItem("refresh");
                 setErr("This account is not a merchant.");
                 return;
             }
 
-            // 登录成功 → dashboard
+            // login redirect dashboard
             nav("/merchant/dashboard");
         } catch (e) {
             console.error(e);
@@ -51,20 +51,17 @@ export default function MerchantAuth() {
 
     return (
         <div className="w-screen h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg border p-6 relative">
+            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 relative">
                 <button
                     className="absolute right-4 top-4 text-xs text-gray-400 hover:text-gray-700"
                     onClick={() => nav("/")}
                 >
-                    ← Back
+                    ← Back to Customer
                 </button>
 
                 <h1 className="text-xl font-semibold text-gray-800 mb-2">
                     Merchant {mode === "login" ? "Login" : "Sign up"}
                 </h1>
-                <p className="text-xs text-gray-500 mb-4">
-                    这是商家后台入口，注册账号会自动标记为 <span className="font-mono">merchant</span>。
-                </p>
 
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
@@ -105,7 +102,6 @@ export default function MerchantAuth() {
                             No merchant account?{" "}
                             <button
                                 type="button"
-                                className="underline"
                                 disabled={loading}
                                 onClick={() => {
                                     setMode("signup");
@@ -120,7 +116,6 @@ export default function MerchantAuth() {
                             Already have an account?{" "}
                             <button
                                 type="button"
-                                className="underline"
                                 disabled={loading}
                                 onClick={() => {
                                     setMode("login");

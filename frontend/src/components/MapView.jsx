@@ -150,7 +150,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
         };
     }, [onPlaceIds]);
 
-    // 根据 allowedPlaceIds 绘制匹配的餐厅 pins
+    // draw restaurant markers based on results & allowedPlaceIds
     useEffect(() => {
         const markerLib = google.maps.marker;
         const map = mapRef.current;
@@ -167,8 +167,8 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
             if (!p.location || !allowed.has(p.id)) return;
             const icon = document.createElement("img");
             icon.src = "https://maps.gstatic.com/mapfiles/ms2/micons/orange-dot.png";
-            icon.style.width = "18px";
-            icon.style.height = "18px";
+            icon.style.width = "20px";
+            icon.style.height = "20px";
 
             const m = new Marker({
                 map,
@@ -182,9 +182,29 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
         });
     }, [allowedPlaceIds]);
 
+    function jumpToSeattle() {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const seattle = { lat: 47.6062, lng: -122.3321 };
+        map.setCenter(seattle);
+        map.setZoom(15);
+
+    }
+
     return (
         <div className="relative w-full h-full">
             <div ref={ref} className="w-full h-full rounded-xl" />
+
+            {/* jump to seattle */}
+            <button
+                type="button"
+                onClick={jumpToSeattle}
+                className="absolute right-16 top-2 z-10 rounded-lg bg-[#FF6A1A] text-xs text-white shadow-2xl"
+            >
+                Live Demo Area: Seattle
+            </button>
+
             {loading && (
                 <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-600 bg-white/60 rounded-xl">
                     Loading map…

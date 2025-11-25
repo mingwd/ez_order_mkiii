@@ -48,13 +48,11 @@ export default function MerchantMenu() {
 
                 <div className="flex gap-3">
                     <button
-                        className="px-4 py-2 border rounded-lg text-sm hover:bg-gray-100"
                         onClick={() => nav("/merchant/dashboard")}
                     >
                         Back
                     </button>
                     <button
-                        className="px-4 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-white-900"
                         onClick={() =>
                             nav(
                                 `/merchant/restaurants/${restId}/items/new`
@@ -66,8 +64,8 @@ export default function MerchantMenu() {
                 </div>
             </div>
 
-            {/* 菜单列表 */}
-            <div className="w-full max-w-4xl bg-white rounded-xl shadow-md border p-6">
+            {/* Menu Items */}
+            <div className="w-full max-w-4xl bg-white rounded-xl shadow-md p-6">
                 {loading && (
                     <div className="text-sm text-gray-500">Loading menu…</div>
                 )}
@@ -86,7 +84,7 @@ export default function MerchantMenu() {
                         {items.map((it) => (
                             <li
                                 key={it.id}
-                                className="border rounded-lg px-4 py-3 flex justify-between items-start"
+                                className="shadow-md rounded-lg px-4 py-3 flex justify-between items-start"
                             >
                                 <div>
                                     <div className="font-medium text-gray-800">

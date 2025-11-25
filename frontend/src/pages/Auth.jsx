@@ -6,14 +6,14 @@ import { apiLogin, apiRegisterCustomer, apiMe } from "../api/client";
 export default function Auth() {
     const navigate = useNavigate();
 
-    // ---- 表单状态 ----
+    // ---- status ----
     const [mode, setMode] = useState("login"); // login | signup
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // 如果用户已登录，访问 /auth 就自动跳回主页
+    // redirect to home if already logged in
     useEffect(() => {
         (async () => {
             try {
@@ -27,7 +27,7 @@ export default function Auth() {
         })();
     }, []);
 
-    // ---- 提交 ----
+    // ---- post ----
     async function handleSubmit(e) {
         e.preventDefault();
         if (!username || !password) {
@@ -43,13 +43,11 @@ export default function Auth() {
                 await apiRegisterCustomer(username, password);
             }
 
-            // 登录
             await apiLogin(username, password);
 
-            // 拉取用户资料
+            // user data
             await apiMe();
 
-            // 跳主页
             navigate("/");
         } catch (err) {
             console.error(err);
@@ -61,10 +59,10 @@ export default function Auth() {
 
     return (
         <div className="w-screen h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-md p-6">
+            <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6">
 
-                {/* 标题 */}
-                <h1 className="text-xl font-semibold text-gray-800 mb-2 text-center">
+                {/* Title */}
+                <h1 className="text-5xl font-semibold text-[var(--ez-primary)] mb-4 text-center">
                     {mode === "login" ? "Login" : "Sign up"}
                 </h1>
 
@@ -72,12 +70,12 @@ export default function Auth() {
                     All accounts created here are customer accounts.
                 </p>
 
-                {/* 表单 */}
+                {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div>
                         <label className="text-sm text-gray-700">Username</label>
                         <input
-                            className="w-full border rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
+                            className="w-full shadow rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             disabled={loading}
@@ -88,7 +86,7 @@ export default function Auth() {
                         <label className="text-sm text-gray-700">Password</label>
                         <input
                             type="password"
-                            className="w-full border rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
+                            className="w-full shadow rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
@@ -112,7 +110,7 @@ export default function Auth() {
                     </button>
                 </form>
 
-                {/* 切换登录/注册 */}
+                {/* Signup / Login */}
                 <div className="mt-4 text-xs text-gray-600 text-center">
                     {mode === "login" ? (
                         <>
@@ -123,7 +121,6 @@ export default function Auth() {
                                     setError("");
                                 }}
                                 disabled={loading}
-                                className="underline"
                             >
                                 Sign up
                             </button>
@@ -137,7 +134,6 @@ export default function Auth() {
                                     setError("");
                                 }}
                                 disabled={loading}
-                                className="underline"
                             >
                                 Login
                             </button>
@@ -145,11 +141,10 @@ export default function Auth() {
                     )}
                 </div>
 
-                {/* 返回主页 */}
+                {/* Back to home */}
                 <div className="mt-4 text-center">
                     <button
                         onClick={() => navigate("/")}
-                        className="text-xs text-gray-500 underline"
                     >
                         Back to home
                     </button>
