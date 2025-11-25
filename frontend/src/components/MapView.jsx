@@ -20,56 +20,6 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
         cbRef.current = onMarkerClick;
     }, [onMarkerClick]);
 
-    // 估算搜索半径
-    function estimateRadiusMeters(map) {
-        const zoom = map.getZoom();
-        const c = map.getCenter();
-        const metersPerPixel =
-            156543.03392 * Math.cos((c.lat() * Math.PI) / 180) / Math.pow(2, zoom);
-        const { width, height } = map.getDiv().getBoundingClientRect();
-        return Math.max(500, Math.min(8000, metersPerPixel * Math.min(width, height) / 2 * 0.9));
-    }
-
-    // 为当前视野生成唯一 key
-    function makeSearchKey(map) {
-        const c = map.getCenter();
-        const r = Math.round(estimateRadiusMeters(map) / 50);
-        return `${c.lat().toFixed(5)}|${c.lng().toFixed(5)}|${r}`;
-    }
-
-    // 执行附近餐厅搜索
-    async function doNearbySearch() {
-        const map = mapRef.current;
-        if (!map) return;
-
-        const key = makeSearchKey(map);
-        if (key === lastKeyRef.current || searchingRef.current) return; // 去重与节流
-
-        searchingRef.current = true;
-        try {
-            const { Place } = await google.maps.importLibrary("places");
-            const c = map.getCenter();
-            const req = {
-                fields: ["id", "displayName", "location"],
-                locationRestriction: { center: { lat: c.lat(), lng: c.lng() }, radius: Math.round(estimateRadiusMeters(map)) },
-                includedPrimaryTypes: ["restaurant"],
-            };
-
-            const resp = await Place.searchNearby(req);
-            const results = resp?.places || [];
-            resultsRef.current = results;
-            lastKeyRef.current = key;
-
-            const ids = results.map(p => p.id).filter(Boolean);
-            onPlaceIds?.(ids);
-        } catch (e) {
-            console.error(e);
-            setErr(`Nearby Search failed: ${e?.message || e}`);
-        } finally {
-            searchingRef.current = false;
-        }
-    }
-
     useEffect(() => {
         let cancelled = false;
 
@@ -81,7 +31,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
                 const { Map } = await google.maps.importLibrary("maps");
                 const { AdvancedMarkerElement: Marker } = await google.maps.importLibrary("marker");
 
-                // 初始定位
+                // inti pos
                 const pos = await new Promise((resolve) => {
                     if (!navigator.geolocation)
                         return resolve({ lat: 47.6097, lng: -122.3331 });
@@ -101,7 +51,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
                 });
                 mapRef.current = map;
 
-                // You are here 标记（随地图中心移动）
+                // You are here
                 const userIcon = document.createElement("img");
                 userIcon.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
                 userIcon.style.width = "30px";
@@ -115,13 +65,10 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
                 });
                 youMarkerRef.current = you;
 
-                // 当地图稳定（idle）时：
-                // 1️⃣ 移动 you 标记到中心
-                // 2️⃣ 调用附近搜索（防抖 500ms）
                 map.addListener("idle", () => {
                     if (!youMarkerRef.current) return;
                     const center = map.getCenter();
-                    youMarkerRef.current.position = center; // 更新标记位置
+                    youMarkerRef.current.position = center;
 
                     if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
                     idleTimerRef.current = setTimeout(() => {
@@ -181,6 +128,55 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
             restMarkersRef.current.push(m);
         });
     }, [allowedPlaceIds]);
+
+    function estimateRadiusMeters(map) {
+        const zoom = map.getZoom();
+        const c = map.getCenter();
+        const metersPerPixel =
+            156543.03392 * Math.cos((c.lat() * Math.PI) / 180) / Math.pow(2, zoom);
+        const { width, height } = map.getDiv().getBoundingClientRect();
+        return Math.max(500, Math.min(8000, metersPerPixel * Math.min(width, height) / 2 * 0.9));
+    }
+
+    // 为当前视野生成唯一 key
+    function makeSearchKey(map) {
+        const c = map.getCenter();
+        const r = Math.round(estimateRadiusMeters(map) / 50);
+        return `${c.lat().toFixed(5)}|${c.lng().toFixed(5)}|${r}`;
+    }
+
+    // 执行附近餐厅搜索
+    async function doNearbySearch() {
+        const map = mapRef.current;
+        if (!map) return;
+
+        const key = makeSearchKey(map);
+        if (key === lastKeyRef.current || searchingRef.current) return;
+
+        searchingRef.current = true;
+        try {
+            const { Place } = await google.maps.importLibrary("places");
+            const c = map.getCenter();
+            const req = {
+                fields: ["id", "displayName", "location"],
+                locationRestriction: { center: { lat: c.lat(), lng: c.lng() }, radius: Math.round(estimateRadiusMeters(map)) },
+                includedPrimaryTypes: ["restaurant"],
+            };
+
+            const resp = await Place.searchNearby(req);
+            const results = resp?.places || [];
+            resultsRef.current = results;
+            lastKeyRef.current = key;
+
+            const ids = results.map(p => p.id).filter(Boolean);
+            onPlaceIds?.(ids);
+        } catch (e) {
+            console.error(e);
+            setErr(`Nearby Search failed: ${e?.message || e}`);
+        } finally {
+            searchingRef.current = false;
+        }
+    }
 
     function jumpToSeattle() {
         const map = mapRef.current;

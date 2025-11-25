@@ -12,6 +12,17 @@ import MerchantDashboard from "./pages/MerchantDashboard.jsx";
 import MerchantMenu from "./pages/MerchantMenu.jsx";
 import MerchantItemEdit from "./pages/MerchantItemEdit.jsx";
 
+if (!window.googleMapsScriptLoaded) {
+  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  const script = document.createElement("script");
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
+  script.async = true;
+
+  document.head.appendChild(script);
+  window.googleMapsScriptLoaded = true;
+}
+
 function AppRouter() {
   return (
     <BrowserRouter>
@@ -42,7 +53,6 @@ function AppRouter() {
               <h1 className="text-2xl font-semibold mb-2">404 Not Found</h1>
               <button
                 onClick={() => (window.location.href = "/")}
-                className="px-4 py-2 border rounded-lg hover:bg-gray-100"
               >
                 Back to home
               </button>

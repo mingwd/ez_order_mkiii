@@ -19,7 +19,7 @@ export async function apiItems(restId) {
 
 export async function apiAiOrder(restaurantIds) {
     const token = localStorage.getItem("access");
-    const resp = await fetch("http://127.0.0.1:8000/api/restaurants/ai_order/", {
+    const resp = await fetch(`${BASE}/api/restaurants/ai_order/`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

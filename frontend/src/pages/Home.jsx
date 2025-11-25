@@ -345,12 +345,6 @@ export default function Home() {
         }
     }
 
-    function openAuth(mode) {
-        setAuthMode(mode);
-        setAuthError("");
-        setAuthOpen(true);
-    }
-
     function closeAuth() {
         if (authLoading) return;
         setAuthOpen(false);
