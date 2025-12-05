@@ -1,5 +1,6 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
+
 import {
     apiResolve,
     apiItems,
@@ -362,7 +363,7 @@ export default function Home() {
                 <div className="h-full px-8 flex items-center justify-between">
                     {/* left：Logo */}
                     <div className="flex items-center gap-2">
-                        <img src={logo} alt="eazy-order logo" className="w-16 h-16 object-contain rounded-lg opacity-90" />
+                        <img src={logo} alt="eazy-order logo" className="w-10 h-10 object-contain rounded-lg opacity-90" />
                         <span className="text-xl tracking-wide text-[var(--ez-primary)] font-bold">
                             EAZY ORDER
                         </span>

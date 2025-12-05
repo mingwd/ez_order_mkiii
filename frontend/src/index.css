@@ -7,7 +7,7 @@
 }
 
 button {
-  @apply bg-[var(--ez-primary)] shadow-[2px_2px_4px_0_#00000050] rounded-lg border-0 transition-all px-4 py-2 text-base font-normal text-gray-50 hover:bg-[var(--ez-primary-hover)];
+  @apply bg-[var(--ez-primary)] shadow-[2px_2px_4px_0_#00000050] rounded-lg transition-all px-3 py-1 text-base font-normal text-gray-50 hover:bg-[var(--ez-primary-hover)];
 }
 
 button:hover {
