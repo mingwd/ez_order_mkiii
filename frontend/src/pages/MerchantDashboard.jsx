@@ -25,31 +25,36 @@ export default function MerchantDashboard() {
 
     if (loading) {
         return (
-            <div className="w-screen h-screen flex items-center justify-center">
+            <div className="w-screen h-screen flex items-center justify-center text-[var(--ez-muted)]">
                 Loading…
             </div>
         );
     }
 
     return (
-        <div className="p-6 w-full min-h-screen bg-gray-50 flex flex-col items-center">
-            <h1 className="text-2xl font-semibold text-gray-800 mb-6">
-                My Restaurants
-            </h1>
+        <div className="p-6 w-full min-h-screen flex flex-col items-center">
+            <div className="w-full max-w-3xl mb-6">
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                    Merchant
+                </p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ez-ink)]">
+                    My Restaurants
+                </h1>
+            </div>
 
             {err && <div className="text-red-600 text-sm mb-4">{err}</div>}
 
-            <div className="w-full max-w-3xl space-y-4">
+            <div className="w-full max-w-3xl space-y-3">
                 {rests.map((r) => (
                     <div
                         key={r.id}
-                        className="bg-white shadow-md rounded-xl p-5 flex justify-between items-start"
+                        className="ez-card rounded-3xl p-5 flex justify-between items-start gap-4"
                     >
                         <div>
-                            <div className="text-lg font-semibold text-gray-800">
+                            <div className="text-lg font-bold text-[var(--ez-ink)]">
                                 {r.name}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-[var(--ez-muted)] mt-0.5">
                                 {r.address}
                             </div>
                         </div>
@@ -67,7 +72,7 @@ export default function MerchantDashboard() {
                 ))}
 
                 {rests.length === 0 && (
-                    <div className="text-center text-gray-500 text-sm py-10">
+                    <div className="ez-card rounded-3xl text-center text-[var(--ez-muted)] text-sm py-12">
                         You have no restaurants yet.
                     </div>
                 )}

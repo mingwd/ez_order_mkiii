@@ -196,18 +196,18 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
             <button
                 type="button"
                 onClick={jumpToSeattle}
-                className="absolute right-16 top-2 z-10 rounded-lg bg-[#FF6A1A] text-xs text-white shadow-2xl"
+                className="absolute right-3 top-3 z-10 rounded-xl text-xs shadow-lg"
             >
                 Live Demo Area: Seattle
             </button>
 
             {loading && (
-                <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-600 bg-white/60 rounded-xl">
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-[var(--ez-muted)] bg-white/90">
                     Loading map…
                 </div>
             )}
             {err && (
-                <div className="absolute left-2 top-2 text-xs px-2 py-1 bg-red-50 text-red-700 border border-red-200 rounded">
+                <div className="absolute left-3 top-3 text-xs px-3 py-1.5 bg-red-50 text-red-700 border border-red-200 rounded-xl">
                     {err}
                 </div>
             )}

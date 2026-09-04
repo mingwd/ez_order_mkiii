@@ -50,24 +50,26 @@ export default function MerchantAuth() {
     }
 
     return (
-        <div className="w-screen h-screen bg-gray-50 flex items-center justify-center px-4">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-6 relative">
+        <div className="w-screen h-screen flex items-center justify-center px-4">
+            <div className="w-full max-w-md ez-card rounded-3xl p-8 relative">
                 <button
-                    className="absolute right-4 top-4 text-xs text-gray-400 hover:text-gray-700"
+                    className="btn-link absolute right-6 top-6 text-xs"
                     onClick={() => nav("/")}
                 >
                     ← Back to Customer
                 </button>
 
-                <h1 className="text-xl font-semibold text-gray-800 mb-2">
-                    Merchant {mode === "login" ? "Login" : "Sign up"}
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                    Merchant
+                </p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ez-ink)] mb-6">
+                    {mode === "login" ? "Welcome back" : "Create account"}
                 </h1>
 
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-xs text-gray-600 mb-1">Username</label>
+                        <label>Username</label>
                         <input
-                            className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             disabled={loading}
@@ -75,10 +77,9 @@ export default function MerchantAuth() {
                     </div>
 
                     <div>
-                        <label className="block text-xs text-gray-600 mb-1">Password</label>
+                        <label>Password</label>
                         <input
                             type="password"
-                            className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
@@ -89,19 +90,20 @@ export default function MerchantAuth() {
 
                     <button
                         type="submit"
-                        className="w-full mt-1 px-3 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="w-full mt-1"
                         disabled={loading}
                     >
                         {loading ? "Working..." : mode === "login" ? "Login" : "Sign up"}
                     </button>
                 </form>
 
-                <div className="mt-4 text-xs text-gray-500 text-center">
+                <div className="mt-5 text-sm text-[var(--ez-muted)] text-center">
                     {mode === "login" ? (
                         <>
                             No merchant account?{" "}
                             <button
                                 type="button"
+                                className="btn-link"
                                 disabled={loading}
                                 onClick={() => {
                                     setMode("signup");
@@ -116,6 +118,7 @@ export default function MerchantAuth() {
                             Already have an account?{" "}
                             <button
                                 type="button"
+                                className="btn-link"
                                 disabled={loading}
                                 onClick={() => {
                                     setMode("login");

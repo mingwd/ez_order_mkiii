@@ -58,24 +58,23 @@ export default function Auth() {
     }
 
     return (
-        <div className="w-screen h-screen flex items-center justify-center bg-gray-50 px-4">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow p-6">
-
-                {/* Title */}
-                <h1 className="text-5xl font-semibold text-[var(--ez-primary)] mb-4 text-center">
-                    {mode === "login" ? "Login" : "Sign up"}
+        <div className="w-screen h-screen flex items-center justify-center px-4">
+            <div className="w-full max-w-md ez-card rounded-3xl p-8">
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] text-center mb-2">
+                    Customer
+                </p>
+                <h1 className="text-4xl font-extrabold text-[var(--ez-ink)] mb-2 text-center tracking-tight">
+                    {mode === "login" ? "Welcome back" : "Create account"}
                 </h1>
 
-                <p className="text-xs text-gray-500 mb-5 text-center">
+                <p className="text-sm text-[var(--ez-muted)] mb-6 text-center">
                     All accounts created here are customer accounts.
                 </p>
 
-                {/* Form */}
-                <form onSubmit={handleSubmit} className="space-y-3">
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="text-sm text-gray-700">Username</label>
+                        <label>Username</label>
                         <input
-                            className="w-full shadow rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
                             disabled={loading}
@@ -83,10 +82,9 @@ export default function Auth() {
                     </div>
 
                     <div>
-                        <label className="text-sm text-gray-700">Password</label>
+                        <label>Password</label>
                         <input
                             type="password"
-                            className="w-full shadow rounded-lg px-3 py-2 text-sm bg-white text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             disabled={loading}
@@ -100,7 +98,7 @@ export default function Auth() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-2 mt-2 rounded-lg bg-orange-300 hover:bg-orange-400 transition font-medium text-gray-800 disabled:opacity-50"
+                        className="w-full mt-2"
                     >
                         {loading
                             ? "Working…"
@@ -110,12 +108,12 @@ export default function Auth() {
                     </button>
                 </form>
 
-                {/* Signup / Login */}
-                <div className="mt-4 text-xs text-gray-600 text-center">
+                <div className="mt-5 text-sm text-[var(--ez-muted)] text-center">
                     {mode === "login" ? (
                         <>
                             No account?{" "}
                             <button
+                                className="btn-link"
                                 onClick={() => {
                                     setMode("signup");
                                     setError("");
@@ -129,6 +127,7 @@ export default function Auth() {
                         <>
                             Already have an account?{" "}
                             <button
+                                className="btn-link"
                                 onClick={() => {
                                     setMode("login");
                                     setError("");
@@ -141,9 +140,9 @@ export default function Auth() {
                     )}
                 </div>
 
-                {/* Back to home */}
-                <div className="mt-4 text-center">
+                <div className="mt-5 text-center">
                     <button
+                        className="btn-ghost"
                         onClick={() => navigate("/")}
                     >
                         Back to home

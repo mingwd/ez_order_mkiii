@@ -130,16 +130,16 @@ export default function MerchantItemEdit({ mode }) {
 
     function tagButtonClass(selected) {
         const base =
-            "px-3 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer";
+            "btn-chip border";
         if (selected) {
             return (
                 base +
-                " bg-blue-500 border-blue-500 text-white shadow-sm"
+                " bg-[var(--ez-primary)] border-[var(--ez-primary)] text-white"
             );
         }
         return (
             base +
-            " bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"
+            " bg-white/80 border-[var(--ez-line)] text-[var(--ez-ink)] hover:border-[rgba(255,106,26,0.4)]"
         );
     }
 
@@ -215,19 +215,22 @@ export default function MerchantItemEdit({ mode }) {
 
     if (loading) {
         return (
-            <div className="w-screen h-screen flex items-center justify-center">
+            <div className="w-screen h-screen flex items-center justify-center text-[var(--ez-muted)]">
                 Loading…
             </div>
         );
     }
 
     return (
-        <div className="w-screen min-h-screen bg-gray-50 flex justify-center p-6">
-            <div className="w-full max-w-3xl bg-white rounded-xl shadow-md p-6">
-                <h1 className="text-2xl font-semibold text-gray-800 mb-2">
+        <div className="w-screen min-h-screen flex justify-center p-6">
+            <div className="w-full max-w-3xl ez-card rounded-3xl p-7">
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                    {effectiveMode === "edit" ? "Edit item" : "New item"}
+                </p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ez-ink)] mb-2">
                     {title}
                 </h1>
-                <p className="text-xs text-gray-500 mb-4">
+                <p className="text-sm text-[var(--ez-muted)] mb-5">
                     {effectiveMode === "edit"
                         ? "Edit menu item information and tags."
                         : "Create a new menu item for this restaurant."}
@@ -242,7 +245,7 @@ export default function MerchantItemEdit({ mode }) {
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label>
                                 Name
                             </label>
                             <input
@@ -256,11 +259,11 @@ export default function MerchantItemEdit({ mode }) {
                         </div>
 
                         <div>
-                            <label className="block text-xs text-gray-600 mb-1">
+                            <label>
                                 Description
                             </label>
                             <textarea
-                                className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-orange-300 min-h-[80px]"
+                                className="min-h-[80px]"
                                 value={form.description}
                                 onChange={(e) =>
                                     handleFieldChange(
@@ -274,11 +277,10 @@ export default function MerchantItemEdit({ mode }) {
 
                         <div className="flex gap-4 items-center">
                             <div className="flex-1">
-                                <label className="block text-xs text-gray-600 mb-1">
+                                <label>
                                     Price ($)
                                 </label>
                                 <input
-                                    className="w-full border rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-1 focus:ring-orange-300"
                                     value={form.price}
                                     onChange={(e) =>
                                         handleFieldChange(
@@ -290,7 +292,7 @@ export default function MerchantItemEdit({ mode }) {
                                 />
                             </div>
 
-                            <label className="flex items-center gap-2 mt-5 text-sm text-gray-800">
+                            <label className="flex items-center gap-2 mt-5 text-sm text-[var(--ez-ink)] font-medium">
                                 <input
                                     type="checkbox"
                                     className="w-4 h-4"
@@ -309,8 +311,8 @@ export default function MerchantItemEdit({ mode }) {
                     </div>
 
                     {/* Tag Select */}
-                    <div className="border-t pt-4 space-y-4">
-                        <h2 className="text-sm font-semibold text-gray-800">
+                    <div className="border-t border-[var(--ez-line)] pt-5 space-y-4">
+                        <h2 className="text-sm font-bold text-[var(--ez-ink)]">
                             Tags
                         </h2>
 
@@ -368,7 +370,7 @@ export default function MerchantItemEdit({ mode }) {
                     <div className="mt-4 flex justify-between">
                         <button
                             type="button"
-                            className="px-4 py-2 border rounded-lg hover:bg-gray-100 text-sm"
+                            className="btn-ghost"
                             onClick={() => navigate(-1)}
                             disabled={saving}
                         >
@@ -377,7 +379,6 @@ export default function MerchantItemEdit({ mode }) {
 
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
                             disabled={saving}
                         >
                             {saving
@@ -401,7 +402,7 @@ function TagGroup({ title, options, selected, onToggle }) {
 
     return (
         <div>
-            <div className="text-xs font-medium text-gray-700 mb-1">
+            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1.5">
                 {title}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -413,10 +414,10 @@ function TagGroup({ title, options, selected, onToggle }) {
                             type="button"
                             onClick={() => onToggle(opt.id)}
                             className={
-                                "px-2 py-1 rounded-full border text-xs " +
+                                "btn-chip border " +
                                 (active
-                                    ? "bg-blue-500 border-blue-500 text-white"
-                                    : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200")
+                                    ? "bg-[var(--ez-primary)] border-[var(--ez-primary)] text-white"
+                                    : "bg-white/80 border-[var(--ez-line)] text-[var(--ez-ink)]")
                             }
                         >
                             {opt.label}
@@ -436,7 +437,7 @@ function TagGroupSingle({ title, options, selectedId, onSelect }) {
 
     return (
         <div>
-            <div className="text-xs font-medium text-gray-700 mb-1">
+            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1.5">
                 {title}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -448,10 +449,10 @@ function TagGroupSingle({ title, options, selectedId, onSelect }) {
                             type="button"
                             onClick={() => onSelect(opt.id)}
                             className={
-                                "px-2 py-1 rounded-full border text-xs " +
+                                "btn-chip border " +
                                 (active
-                                    ? "bg-blue-500 border-blue-500 text-white"
-                                    : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200")
+                                    ? "bg-[var(--ez-primary)] border-[var(--ez-primary)] text-white"
+                                    : "bg-white/80 border-[var(--ez-line)] text-[var(--ez-ink)]")
                             }
                         >
                             {opt.label}

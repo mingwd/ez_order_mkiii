@@ -49,8 +49,12 @@ function AppRouter() {
         <Route
           path="*"
           element={
-            <div className="w-screen h-screen flex flex-col items-center justify-center text-gray-700">
-              <h1 className="text-2xl font-semibold mb-2">404 Not Found</h1>
+            <div className="w-screen h-screen flex flex-col items-center justify-center text-[var(--ez-ink)] px-4">
+              <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-3">
+                Error
+              </p>
+              <h1 className="text-3xl font-extrabold mb-2">404 Not Found</h1>
+              <p className="text-sm text-[var(--ez-muted)] mb-6">This page doesn’t exist.</p>
               <button
                 onClick={() => (window.location.href = "/")}
               >

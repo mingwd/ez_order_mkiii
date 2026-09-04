@@ -32,22 +32,25 @@ export default function MerchantMenu() {
     }, [restId]);
 
     return (
-        <div className="w-screen min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-            {/* 顶部条：餐厅信息 + 按钮 */}
-            <div className="w-full max-w-4xl flex items-center justify-between mb-6">
+        <div className="w-screen min-h-screen p-6 flex flex-col items-center">
+            <div className="w-full max-w-4xl flex items-center justify-between mb-6 gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-800">
+                    <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                        Menu
+                    </p>
+                    <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ez-ink)]">
                         {restaurant?.name || `Restaurant #${restId}`}
                     </h1>
                     {restaurant?.address && (
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-[var(--ez-muted)] mt-1">
                             {restaurant.address}
                         </p>
                     )}
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-3 shrink-0">
                     <button
+                        className="btn-ghost"
                         onClick={() => nav("/merchant/dashboard")}
                     >
                         Back
@@ -64,17 +67,16 @@ export default function MerchantMenu() {
                 </div>
             </div>
 
-            {/* Menu Items */}
-            <div className="w-full max-w-4xl bg-white rounded-xl shadow-md p-6">
+            <div className="w-full max-w-4xl ez-card rounded-3xl p-6">
                 {loading && (
-                    <div className="text-sm text-gray-500">Loading menu…</div>
+                    <div className="text-sm text-[var(--ez-muted)]">Loading menu…</div>
                 )}
                 {err && !loading && (
                     <div className="text-sm text-red-600 mb-3">{err}</div>
                 )}
 
                 {!loading && !err && items.length === 0 && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-sm text-[var(--ez-muted)] py-6 text-center">
                         No items yet. Click “New item” to create one.
                     </div>
                 )}
@@ -84,24 +86,24 @@ export default function MerchantMenu() {
                         {items.map((it) => (
                             <li
                                 key={it.id}
-                                className="shadow-md rounded-lg px-4 py-3 flex justify-between items-start"
+                                className="rounded-xl px-4 py-3.5 flex justify-between items-start gap-4 bg-[var(--ez-bg)]"
                             >
                                 <div>
-                                    <div className="font-medium text-gray-800">
+                                    <div className="font-semibold text-[var(--ez-ink)]">
                                         {it.name}
                                     </div>
                                     {it.description && (
-                                        <div className="text-xs text-gray-500 mt-1">
+                                        <div className="text-xs text-[var(--ez-muted)] mt-1 leading-relaxed">
                                             {it.description}
                                         </div>
                                     )}
-                                    <div className="text-xs text-gray-600 mt-1">
+                                    <div className="text-sm font-semibold mt-2">
                                         ${Number(it.price).toFixed(2)}
                                     </div>
                                 </div>
 
                                 <button
-                                    className="px-3 py-1 rounded-lg border text-xs hover:bg-gray-50"
+                                    className="btn-secondary"
                                     onClick={() =>
                                         nav(
                                             `/merchant/items/${it.id}/edit`

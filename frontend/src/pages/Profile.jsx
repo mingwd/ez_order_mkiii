@@ -116,7 +116,7 @@ export default function Profile() {
 
     if (loading) {
         return (
-            <div className="w-screen h-screen flex items-center justify-center">
+            <div className="w-screen h-screen flex items-center justify-center text-[var(--ez-muted)]">
                 Loading…
             </div>
         );
@@ -141,44 +141,45 @@ export default function Profile() {
     };
 
     const pillBase =
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs mr-2 mb-2 cursor-pointer transition";
+        "btn-chip mr-2 mb-2 border";
     const pillActive =
-        "bg-orange-100 border-orange-300 text-orange-800 hover:bg-orange-200";
+        "bg-[#fff4ec] border-[#ffd7bf] text-[var(--ez-primary)] hover:bg-[#ffe8d6]";
     const pillMuted =
-        "bg-gray-100 border-gray-300 text-gray-400 line-through hover:bg-gray-100";
+        "bg-[#f3f3f3] border-transparent text-[var(--ez-muted)] line-through hover:bg-[#e8e8e8]";
 
     return (
         <div className="w-screen min-h-screen p-6 flex flex-col items-center">
-            {/* Top */}
-            <div className="bg-white w-full max-w-3xl rounded-xl shadow-md p-6 mb-6">
-                <h1 className="text-2xl font-semibold text-gray-800">Profile</h1>
-                <p className="text-sm text-gray-500 mt-1">
+            <div className="ez-card w-full max-w-3xl rounded-3xl p-6 mb-5">
+                <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                    Account
+                </p>
+                <h1 className="text-3xl font-extrabold tracking-tight text-[var(--ez-ink)]">Profile</h1>
+                <p className="text-sm text-[var(--ez-muted)] mt-1">
                     Bio information & preferences
                 </p>
 
-                <div className="mt-4 space-y-2 text-sm text-gray-900">
-                    <div>
-                        <strong className="text-gray-700">Username:</strong>{" "}
-                        {data.username}
+                <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div className="rounded-xl bg-[var(--ez-bg)] px-4 py-3">
+                        <div className="text-xs text-[var(--ez-muted)] mb-0.5">Username</div>
+                        <div className="font-semibold">{data.username}</div>
                     </div>
-                    <div>
-                        <strong className="text-gray-700">User Type:</strong>{" "}
-                        {data.user_type}
+                    <div className="rounded-xl bg-[var(--ez-bg)] px-4 py-3">
+                        <div className="text-xs text-[var(--ez-muted)] mb-0.5">User type</div>
+                        <div className="font-semibold">{data.user_type}</div>
                     </div>
                 </div>
             </div>
 
             <form
                 onSubmit={handleSave}
-                className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl"
+                className="grid grid-cols-1 md:grid-cols-2 gap-5 w-full max-w-3xl"
             >
-                {/* Left */}
-                <div className="bg-white rounded-xl shadow-md p-6 space-y-3">
-                    <h2 className="text-lg font-semibold text-gray-800">Basic</h2>
+                <div className="ez-card rounded-3xl p-6 space-y-3">
+                    <h2 className="text-lg font-bold text-[var(--ez-ink)]">Basic</h2>
 
-                    <div className="space-y-2 text-sm">
-                        <div className="text-gray-900">
-                            <label className="block text-xs text-gray-600 mb-1">
+                    <div className="space-y-3 text-sm">
+                        <div>
+                            <label>
                                 Height (cm)
                             </label>
                             <input
@@ -190,8 +191,8 @@ export default function Profile() {
                             />
                         </div>
 
-                        <div className="text-gray-900">
-                            <label className="block text-xs text-gray-600 mb-1">
+                        <div>
+                            <label>
                                 Weight (kg)
                             </label>
                             <input
@@ -203,8 +204,8 @@ export default function Profile() {
                             />
                         </div>
 
-                        <div className="text-gray-900">
-                            <label className="block text-xs text-gray-600 mb-1">
+                        <div>
+                            <label>
                                 Age
                             </label>
                             <input
@@ -216,8 +217,8 @@ export default function Profile() {
                             />
                         </div>
 
-                        <div className="text-gray-900">
-                            <label className="block text-xs text-gray-600 mb-1">
+                        <div>
+                            <label>
                                 Gender
                             </label>
                             <select
@@ -234,8 +235,8 @@ export default function Profile() {
                             </select>
                         </div>
 
-                        <div className="text-gray-900">
-                            <label className="block text-xs text-gray-600 mb-1">
+                        <div>
+                            <label>
                                 Activity Level
                             </label>
                             <select
@@ -253,31 +254,29 @@ export default function Profile() {
                             </select>
                         </div>
 
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-[var(--ez-muted)]">
                             BMR (calculated): {data.bmr ?? "—"}
                         </div>
                     </div>
                 </div>
 
-                {/* Right：Memo */}
-                <div className="bg-white rounded-xl shadow-md p-6 space-y-3">
-                    <h2 className="text-lg font-semibold text-gray-800">Memo</h2>
-                    <p className="text-xs text-gray-500">
+                <div className="ez-card rounded-3xl p-6 space-y-3">
+                    <h2 className="text-lg font-bold text-[var(--ez-ink)]">Memo</h2>
+                    <p className="text-xs text-[var(--ez-muted)]">
                         Diet notes / restrictions / anything you want the AI to know.
                     </p>
                     <textarea
-                        className="text-gray-900 w-full min-h-[160px] shadow-md rounded-lg px-3 py-2 text-sm"
+                        className="min-h-[160px]"
                         value={data.memo ?? ""}
                         onChange={(e) => handleFieldChange("memo", e.target.value)}
                     />
                 </div>
 
-                {/* Pref tags */}
-                <div className="bg-white rounded-xl shadow-md p-6 md:col-span-2 space-y-3">
-                    <h2 className="text-lg font-semibold text-gray-800">
+                <div className="ez-card rounded-3xl p-6 md:col-span-2 space-y-3">
+                    <h2 className="text-lg font-bold text-[var(--ez-ink)]">
                         Preferences (click to mute)
                     </h2>
-                    <p className="text-xs text-gray-500 mb-1">
+                    <p className="text-xs text-[var(--ez-muted)] mb-1">
                         These are tags the system has learned from your past orders.
                         Click a tag to tell the AI “I don&apos;t like this anymore”
                         — it will be muted (score = 0) after you save.
@@ -286,7 +285,7 @@ export default function Profile() {
                     {/* only show existing tags */}
                     {prefs.cuisines?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Cuisine
                             </div>
                             <div>
@@ -312,7 +311,7 @@ export default function Profile() {
 
                     {prefs.flavors?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Flavor
                             </div>
                             <div>
@@ -338,7 +337,7 @@ export default function Profile() {
 
                     {prefs.nutritions?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Nutrition
                             </div>
                             <div>
@@ -364,7 +363,7 @@ export default function Profile() {
 
                     {prefs.proteins?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Protein
                             </div>
                             <div>
@@ -390,7 +389,7 @@ export default function Profile() {
 
                     {prefs.spices?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Spiciness
                             </div>
                             <div>
@@ -416,7 +415,7 @@ export default function Profile() {
 
                     {prefs.meal_types?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Meal type
                             </div>
                             <div>
@@ -442,7 +441,7 @@ export default function Profile() {
 
                     {prefs.allergens?.length > 0 && (
                         <div className="mb-2">
-                            <div className="text-xs font-semibold text-gray-600 mb-1">
+                            <div className="text-xs font-semibold text-[var(--ez-muted)] mb-1">
                                 Allergens (learned)
                             </div>
                             <div>
@@ -473,20 +472,19 @@ export default function Profile() {
                         !prefs.spices?.length &&
                         !prefs.meal_types?.length &&
                         !prefs.allergens?.length) && (
-                            <div className="text-xs text-gray-500 italic">
+                            <div className="text-xs text-[var(--ez-muted)] italic">
                                 No learned preferences yet.
                                 Once you place some orders, tags will appear here.
                             </div>
                         )}
                 </div>
 
-                {/* Bot */}
-                <div className="md:col-span-2 flex justify-between items-center mt-2">
+                <div className="md:col-span-2 flex justify-between items-center mt-1 pb-4">
                     <div className="text-xs text-red-600">{error}</div>
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            className="px-4 py-2 border rounded-lg hover:bg-gray-100 transition text-sm"
+                            className="btn-ghost"
                             onClick={() => nav("/")}
                             disabled={saving}
                         >
@@ -494,7 +492,7 @@ export default function Profile() {
                         </button>
                         <button
                             type="button"
-                            className="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 text-sm"
+                            className="btn-danger"
                             onClick={handleLogout}
                             disabled={saving}
                         >
@@ -502,7 +500,6 @@ export default function Profile() {
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 rounded-lg bg-orange-300 hover:bg-orange-400 text-sm font-medium text-gray-800 disabled:opacity-60"
                             disabled={saving}
                         >
                             {saving ? "Saving…" : "Save"}
