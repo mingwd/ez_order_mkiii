@@ -170,3 +170,159 @@ label {
   background: #d4d4d4;
   border-radius: 999px;
 }
+
+.ez-map-pin {
+  position: relative;
+  width: max-content;
+  height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  cursor: pointer;
+  overflow: visible;
+}
+
+.ez-map-pin-label {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #191919;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.ez-map-pin-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.28));
+}
+
+.ez-map-pin-head {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--ez-primary);
+  border: 2.5px solid #fff;
+  box-sizing: border-box;
+}
+
+.ez-map-pin-point {
+  width: 0;
+  height: 0;
+  margin-top: -1px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--ez-primary);
+}
+
+.ez-map-pin.is-active .ez-map-pin-label,
+.ez-map-pin:hover .ez-map-pin-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ez-map-pin.is-active .ez-map-pin-mark,
+.ez-map-pin:hover .ez-map-pin-mark {
+  transform: scale(1.18);
+}
+
+.ez-list-item-active {
+  background: #fff4ec !important;
+  box-shadow: inset 0 0 0 1.5px var(--ez-primary);
+}
+
+.ez-map-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transform: translateY(2px);
+}
+
+.ez-map-pin-label {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  max-width: 220px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #191919;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.ez-map-pin-label::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border: 5px solid transparent;
+  border-top-color: #191919;
+}
+
+.ez-map-pin.is-active .ez-map-pin-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.ez-map-pin-mark {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.28));
+  transition: transform 120ms ease;
+}
+
+.ez-map-pin.is-active .ez-map-pin-mark {
+  transform: scale(1.18) translateY(-2px);
+}
+
+.ez-map-pin-head {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--ez-primary);
+  border: 2.5px solid #fff;
+  box-sizing: border-box;
+}
+
+.ez-map-pin-point {
+  width: 0;
+  height: 0;
+  margin-top: -2px;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 8px solid var(--ez-primary);
+}
+
+.ez-rest-row.is-active {
+  background: #fff4ec;
+  box-shadow: inset 3px 0 0 var(--ez-primary);
+}

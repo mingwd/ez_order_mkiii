@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 
 import {
     apiResolve,
@@ -70,6 +70,14 @@ export default function Home() {
     // ---- cart ----
     const [cartItems, setCartItems] = useState([]);
     // cart item: { itemId, name, price, restaurantId, restaurantName, qty }
+
+    const [hoveredPlaceId, setHoveredPlaceId] = useState(null);
+    const listItemRefs = useRef({});
+
+    const placeNames = useMemo(
+        () => Object.fromEntries(rests.map((r) => [r.google_place_id, r.name])),
+        [rests]
+    );
 
     const handlePlaceIds = useCallback(async (ids) => {
         try {
@@ -355,6 +363,14 @@ export default function Home() {
         setAuthOpen(false);
     }
 
+    function handlePinHover(placeId) {
+        setHoveredPlaceId(placeId);
+        if (!placeId) return;
+        listItemRefs.current[placeId]?.scrollIntoView({
+            block: "nearest",
+            behavior: "smooth",
+        });
+    }
     const cartCount = cartItems.reduce((s, c) => s + c.qty, 0);
     const cartRestaurantCount = new Set(
         cartItems.map((c) => c.restaurantName)
@@ -404,6 +420,9 @@ export default function Home() {
                             <MapView
                                 onPlaceIds={handlePlaceIds}
                                 onMarkerClick={handleMarkerClick}
+                                onMarkerHover={handlePinHover}
+                                hoveredPlaceId={hoveredPlaceId}
+                                placeNames={placeNames}
                                 allowedPlaceIds={allowedIds}
                             />
                         </div>
@@ -435,8 +454,18 @@ export default function Home() {
                                 {rests.map((r) => (
                                     <li
                                         key={r.id}
+                                        ref={(el) => {
+                                            if (el) listItemRefs.current[r.google_place_id] = el;
+                                            else delete listItemRefs.current[r.google_place_id];
+                                        }}
                                         onClick={() => openMenu(r)}
-                                        className="rounded-xl p-3.5 cursor-pointer transition bg-[var(--ez-bg)] hover:bg-[#efefef]"
+                                        onMouseEnter={() => setHoveredPlaceId(r.google_place_id)}
+                                        onMouseLeave={() => setHoveredPlaceId(null)}
+                                        className={`rounded-xl p-3.5 cursor-pointer transition ${
+                                            hoveredPlaceId === r.google_place_id
+                                                ? "ez-list-item-active"
+                                                : "bg-[var(--ez-bg)] hover:bg-[#efefef]"
+                                        }`}
                                     >
                                         <div className="font-semibold text-[var(--ez-ink)]">
                                             {r.name}

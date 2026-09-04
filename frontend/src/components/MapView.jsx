@@ -1,12 +1,42 @@
 // src/components/MapView.jsx
 import { useEffect, useRef, useState } from "react";
 
-export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [] }) {
+function createPinElement(name) {
+    const root = document.createElement("div");
+    root.className = "ez-map-pin";
+
+    const label = document.createElement("div");
+    label.className = "ez-map-pin-label";
+    label.textContent = name || "Restaurant";
+
+    const mark = document.createElement("div");
+    mark.className = "ez-map-pin-mark";
+
+    const head = document.createElement("span");
+    head.className = "ez-map-pin-head";
+
+    const point = document.createElement("span");
+    point.className = "ez-map-pin-point";
+
+    mark.append(head, point);
+    root.append(label, mark);
+    return root;
+}
+
+export default function MapView({
+    onPlaceIds,
+    onMarkerClick,
+    onMarkerHover,
+    hoveredPlaceId = null,
+    placeNames = {},
+    allowedPlaceIds = [],
+}) {
     const ref = useRef(null);
     const restMarkersRef = useRef([]);
     const youMarkerRef = useRef(null);
     const resultsRef = useRef([]);
     const cbRef = useRef(onMarkerClick);
+    const hoverCbRef = useRef(onMarkerHover);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
     const mapRef = useRef(null);
@@ -19,6 +49,10 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
     useEffect(() => {
         cbRef.current = onMarkerClick;
     }, [onMarkerClick]);
+
+    useEffect(() => {
+        hoverCbRef.current = onMarkerHover;
+    }, [onMarkerHover]);
 
     useEffect(() => {
         let cancelled = false;
@@ -88,7 +122,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
         return () => {
             cancelled = true;
             if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
-            restMarkersRef.current.forEach(m => (m.map = null));
+            restMarkersRef.current.forEach(({ marker }) => (marker.map = null));
             restMarkersRef.current = [];
             if (youMarkerRef.current) youMarkerRef.current.map = null;
             youMarkerRef.current = null;
@@ -104,7 +138,7 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
         if (!map || !markerLib) return;
         const { AdvancedMarkerElement: Marker } = markerLib;
 
-        restMarkersRef.current.forEach(m => (m.map = null));
+        restMarkersRef.current.forEach(({ marker }) => (marker.map = null));
         restMarkersRef.current = [];
 
         if (!allowedPlaceIds || allowedPlaceIds.length === 0) return;
@@ -112,22 +146,38 @@ export default function MapView({ onPlaceIds, onMarkerClick, allowedPlaceIds = [
 
         resultsRef.current.forEach((p) => {
             if (!p.location || !allowed.has(p.id)) return;
-            const icon = document.createElement("img");
-            icon.src = "https://maps.gstatic.com/mapfiles/ms2/micons/orange-dot.png";
-            icon.style.width = "20px";
-            icon.style.height = "20px";
+            const name = placeNames[p.id] || p.displayName?.text || "Restaurant";
+            const pin = createPinElement(name);
 
             const m = new Marker({
                 map,
                 position: p.location,
-                title: p.displayName?.text || "Unnamed",
-                content: icon,
+                content: pin,
                 gmpClickable: true,
+                zIndex: 1,
             });
             m.addListener("gmp-click", () => cbRef.current?.(p.id));
-            restMarkersRef.current.push(m);
+            pin.addEventListener("pointerenter", () => {
+                pin.classList.add("is-active");
+                m.zIndex = 20;
+                hoverCbRef.current?.(p.id);
+            });
+            pin.addEventListener("pointerleave", () => {
+                pin.classList.remove("is-active");
+                m.zIndex = 1;
+                hoverCbRef.current?.(null);
+            });
+            restMarkersRef.current.push({ marker: m, el: pin, placeId: p.id });
         });
-    }, [allowedPlaceIds]);
+    }, [allowedPlaceIds, placeNames]);
+
+    useEffect(() => {
+        restMarkersRef.current.forEach(({ marker, el, placeId }) => {
+            const on = Boolean(hoveredPlaceId && placeId === hoveredPlaceId);
+            el.classList.toggle("is-active", on);
+            marker.zIndex = on ? 20 : 1;
+        });
+    }, [hoveredPlaceId]);
 
     function estimateRadiusMeters(map) {
         const zoom = map.getZoom();
