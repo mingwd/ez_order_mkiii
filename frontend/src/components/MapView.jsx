@@ -252,7 +252,7 @@ export default function MapView({
             <button
                 type="button"
                 onClick={jumpToSeattle}
-                className="absolute right-3 top-3 z-10 rounded-xl text-xs shadow-lg"
+                className="absolute left-3 bottom-3 z-10 rounded-xl text-xs shadow-lg"
             >
                 Live Demo Area: Seattle
             </button>
