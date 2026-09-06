@@ -1,5 +1,6 @@
 // src/components/MapView.jsx
 import { useEffect, useRef, useState } from "react";
+import { loadGoogleMaps } from "../lib/googleMaps";
 
 function createPinElement(name) {
     const root = document.createElement("div");
@@ -37,14 +38,15 @@ export default function MapView({
     const resultsRef = useRef([]);
     const cbRef = useRef(onMarkerClick);
     const hoverCbRef = useRef(onMarkerHover);
+    const onPlaceIdsRef = useRef(onPlaceIds);
     const [err, setErr] = useState("");
     const [loading, setLoading] = useState(true);
+    const [mapReady, setMapReady] = useState(false);
     const mapRef = useRef(null);
 
     const idleTimerRef = useRef(null);
     const searchingRef = useRef(false);
     const lastKeyRef = useRef("");
-    const mountedRef = useRef(false);
 
     useEffect(() => {
         cbRef.current = onMarkerClick;
@@ -55,17 +57,21 @@ export default function MapView({
     }, [onMarkerHover]);
 
     useEffect(() => {
+        onPlaceIdsRef.current = onPlaceIds;
+    }, [onPlaceIds]);
+
+    useEffect(() => {
         let cancelled = false;
 
         async function init() {
             try {
-                if (mountedRef.current) return;
-                mountedRef.current = true;
+                await loadGoogleMaps();
+                if (cancelled || !ref.current) return;
 
                 const { Map } = await google.maps.importLibrary("maps");
                 const { AdvancedMarkerElement: Marker } = await google.maps.importLibrary("marker");
+                if (cancelled || !ref.current) return;
 
-                // inti pos
                 const pos = await new Promise((resolve) => {
                     if (!navigator.geolocation)
                         return resolve({ lat: 47.6097, lng: -122.3331 });
@@ -75,7 +81,7 @@ export default function MapView({
                         { enableHighAccuracy: true, timeout: 3000 }
                     );
                 });
-                if (cancelled) return;
+                if (cancelled || !ref.current) return;
 
                 const map = new Map(ref.current, {
                     center: pos,
@@ -85,7 +91,6 @@ export default function MapView({
                 });
                 mapRef.current = map;
 
-                // You are here
                 const userIcon = document.createElement("img");
                 userIcon.src = "https://maps.gstatic.com/mapfiles/api-3/images/spotlight-poi2_hdpi.png";
                 userIcon.style.width = "30px";
@@ -110,8 +115,10 @@ export default function MapView({
                     }, 500);
                 });
 
+                setMapReady(true);
                 setLoading(false);
             } catch (e) {
+                if (cancelled) return;
                 console.error(e);
                 setErr(`Map init failed: ${e?.message || e}`);
                 setLoading(false);
@@ -127,15 +134,14 @@ export default function MapView({
             if (youMarkerRef.current) youMarkerRef.current.map = null;
             youMarkerRef.current = null;
             mapRef.current = null;
-            mountedRef.current = false;
         };
-    }, [onPlaceIds]);
+    }, []);
 
     // draw restaurant markers based on results & allowedPlaceIds
     useEffect(() => {
-        const markerLib = google.maps.marker;
         const map = mapRef.current;
-        if (!map || !markerLib) return;
+        const markerLib = window.google?.maps?.marker;
+        if (!mapReady || !map || !markerLib) return;
         const { AdvancedMarkerElement: Marker } = markerLib;
 
         restMarkersRef.current.forEach(({ marker }) => (marker.map = null));
@@ -169,7 +175,7 @@ export default function MapView({
             });
             restMarkersRef.current.push({ marker: m, el: pin, placeId: p.id });
         });
-    }, [allowedPlaceIds, placeNames]);
+    }, [allowedPlaceIds, placeNames, mapReady]);
 
     useEffect(() => {
         restMarkersRef.current.forEach(({ marker, el, placeId }) => {
@@ -219,7 +225,7 @@ export default function MapView({
             lastKeyRef.current = key;
 
             const ids = results.map(p => p.id).filter(Boolean);
-            onPlaceIds?.(ids);
+            onPlaceIdsRef.current?.(ids);
         } catch (e) {
             console.error(e);
             setErr(`Nearby Search failed: ${e?.message || e}`);

@@ -11,17 +11,11 @@ import MerchantAuth from "./pages/MerchantAuth.jsx";
 import MerchantDashboard from "./pages/MerchantDashboard.jsx";
 import MerchantMenu from "./pages/MerchantMenu.jsx";
 import MerchantItemEdit from "./pages/MerchantItemEdit.jsx";
+import { loadGoogleMaps } from "./lib/googleMaps";
 
-if (!window.googleMapsScriptLoaded) {
-  const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-  const script = document.createElement("script");
-  script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,marker&loading=async`;
-  script.async = true;
-
-  document.head.appendChild(script);
-  window.googleMapsScriptLoaded = true;
-}
+loadGoogleMaps().catch((err) => {
+  console.error("Google Maps failed to preload:", err);
+});
 
 function AppRouter() {
   return (
