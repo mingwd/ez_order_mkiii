@@ -230,14 +230,12 @@ label {
   border-top: 8px solid var(--ez-primary);
 }
 
-.ez-map-pin.is-active .ez-map-pin-label,
-.ez-map-pin:hover .ez-map-pin-label {
+.ez-map-pin.is-active .ez-map-pin-label {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 
-.ez-map-pin.is-active .ez-map-pin-mark,
-.ez-map-pin:hover .ez-map-pin-mark {
+.ez-map-pin.is-active .ez-map-pin-mark {
   transform: scale(1.18);
 }
 

@@ -162,16 +162,8 @@ export default function MapView({
                 gmpClickable: true,
                 zIndex: 1,
             });
-            m.addListener("gmp-click", () => cbRef.current?.(p.id));
-            pin.addEventListener("pointerenter", () => {
-                pin.classList.add("is-active");
-                m.zIndex = 20;
+            m.addListener("gmp-click", () => {
                 hoverCbRef.current?.(p.id);
-            });
-            pin.addEventListener("pointerleave", () => {
-                pin.classList.remove("is-active");
-                m.zIndex = 1;
-                hoverCbRef.current?.(null);
             });
             restMarkersRef.current.push({ marker: m, el: pin, placeId: p.id });
         });
