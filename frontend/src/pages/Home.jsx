@@ -414,8 +414,8 @@ export default function Home() {
             </header>
 
             <main className="flex-1 min-h-0 w-full px-4 md:px-6 pb-4">
-                <div className="grid grid-cols-12 gap-4 md:gap-5 lg:h-full">
-                    <div className="col-span-12 lg:col-span-8 ez-card rounded-3xl h-[36vh] min-h-[200px] lg:h-full lg:min-h-0 overflow-hidden">
+                <div className="grid grid-cols-12 gap-4 md:gap-5 h-full">
+                    <div className="col-span-12 lg:col-span-8 ez-card rounded-3xl h-full min-h-[280px] overflow-hidden">
                         <div className="w-full h-full">
                             <MapView
                                 onPlaceIds={handlePlaceIds}
@@ -429,8 +429,8 @@ export default function Home() {
                     </div>
 
                     <div className="col-span-12 lg:col-span-4 flex flex-col gap-4 min-h-0">
-                        <div className="ez-card rounded-3xl p-4 sm:p-5 flex-1 flex flex-col min-h-[20.5rem] lg:min-h-0">
-                            <div className="mb-3 sm:mb-4">
+                        <div className="ez-card rounded-3xl p-5 flex-1 flex flex-col min-h-0">
+                            <div className="mb-4">
                                 <h2 className="text-lg font-bold tracking-tight">
                                     Nearby restaurants
                                 </h2>
@@ -450,7 +450,7 @@ export default function Home() {
                                 </div>
                             )}
 
-                            <ul className="space-y-2 overflow-y-auto ez-scroll pr-1 flex-1 min-h-[14.5rem] lg:min-h-0">
+                            <ul className="space-y-2 overflow-y-auto ez-scroll pr-1 flex-1">
                                 {rests.map((r) => (
                                     <li
                                         key={r.id}
