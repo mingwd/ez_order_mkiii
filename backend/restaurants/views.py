@@ -22,11 +22,12 @@ from .models import (
     NutritionTag,
 )
 from .serializers import (
-    RestaurantSerializer, 
-    ItemSerializer, 
-    OrderCreateSerializer, 
-    MerchantItemDetailSerializer, 
-    MerchantItemCreateSerializer
+    RestaurantSerializer,
+    ItemSerializer,
+    OrderCreateSerializer,
+    MerchantItemDetailSerializer,
+    MerchantItemCreateSerializer,
+    MerchantRestaurantCreateSerializer,
 )
 
 from accounts.models import (
@@ -600,6 +601,44 @@ def merchant_my_restaurants(request):
     qs = Restaurant.objects.filter(owner=request.user).order_by("id")
     data = RestaurantSerializer(qs, many=True).data
     return Response({"restaurants": data})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def merchant_create_restaurant(request):
+    import uuid
+
+    try:
+        profile = request.user.profile
+    except UserProfile.DoesNotExist:
+        return Response({"detail": "Profile not found."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if profile.user_type not in ("owner", "merchant"):
+        return Response({"detail": "Not a merchant account."}, status=status.HTTP_403_FORBIDDEN)
+
+    ser = MerchantRestaurantCreateSerializer(data=request.data)
+    if not ser.is_valid():
+        return Response(ser.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    place_id = (ser.validated_data.get("google_place_id") or "").strip()
+    if not place_id:
+        place_id = f"merchant-{request.user.id}-{uuid.uuid4().hex[:16]}"
+    elif Restaurant.objects.filter(google_place_id=place_id).exists():
+        return Response(
+            {"google_place_id": "This Google place is already registered."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    restaurant = Restaurant.objects.create(
+        owner=request.user,
+        name=ser.validated_data["name"],
+        address=(ser.validated_data.get("address") or "")[:400],
+        google_place_id=place_id,
+        latitude=ser.validated_data.get("latitude") or Decimal("47.606200"),
+        longitude=ser.validated_data.get("longitude") or Decimal("-122.332100"),
+        is_active=True,
+    )
+    return Response(RestaurantSerializer(restaurant).data, status=status.HTTP_201_CREATED)
 
 
 @api_view(["GET", "PUT"])

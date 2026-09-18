@@ -145,6 +145,25 @@ export async function apiRegisterMerchant(username, password) {
     return r.json();
 }
 
+export async function apiMerchantCreateRestaurant(payload) {
+    const r = await fetch(`${BASE}/api/merchant/restaurants/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+        body: JSON.stringify(payload),
+    });
+    if (r.status === 401) throw new Error("unauthorized");
+    if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        const first = Object.values(data)[0];
+        const msg = Array.isArray(first) ? first[0] : (data.detail || first);
+        throw new Error(msg || "create restaurant failed");
+    }
+    return r.json();
+}
+
 export async function apiMerchantMyRestaurants() {
     const r = await fetch(`${BASE}/api/merchant/restaurants/my/`, {
         headers: {

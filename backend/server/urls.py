@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.urls import path
 from health.views import healthz
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from restaurants.views import resolve_restaurants, items_by_restaurant, ai_order, create_order, my_orders, merchant_my_restaurants, merchant_item_detail, merchant_create_item, merchant_tags_overview
+from restaurants.views import resolve_restaurants, items_by_restaurant, ai_order, create_order, my_orders, merchant_my_restaurants, merchant_create_restaurant, merchant_item_detail, merchant_create_item, merchant_tags_overview
 from accounts.views import register_customer, me, profile_detail, register_merchant
 
 urlpatterns = [
@@ -25,6 +25,7 @@ urlpatterns = [
     path("api/auth/merchant/register/", register_merchant, name="register_merchant"),    # 注册为 merchant
 
     path("api/merchant/restaurants/my/", merchant_my_restaurants, name="merchant_my_restaurants"),
+    path("api/merchant/restaurants/", merchant_create_restaurant, name="merchant_create_restaurant"),
     path("api/merchant/items/<item_id>/", merchant_item_detail, name="merchant_item_detail"),
     path("api/merchant/restaurants/<rest_id>/items/", merchant_create_item, name="merchant_create_item"),
     path("api/merchant/tags/", merchant_tags_overview, name="merchant_tags_overview")

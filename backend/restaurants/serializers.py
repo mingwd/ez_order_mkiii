@@ -23,6 +23,26 @@ class RestaurantSerializer(serializers.ModelSerializer):
         fields = ["id", "name", "address", "google_place_id", "latitude", "longitude"]
 
 
+class MerchantRestaurantCreateSerializer(serializers.ModelSerializer):
+    google_place_id = serializers.CharField(required=False, allow_blank=True, max_length=255)
+    latitude = serializers.DecimalField(
+        max_digits=9, decimal_places=6, required=False, default=Decimal("47.606200")
+    )
+    longitude = serializers.DecimalField(
+        max_digits=9, decimal_places=6, required=False, default=Decimal("-122.332100")
+    )
+
+    class Meta:
+        model = Restaurant
+        fields = ["name", "address", "google_place_id", "latitude", "longitude"]
+
+    def validate_name(self, value):
+        name = (value or "").strip()
+        if not name:
+            raise serializers.ValidationError("Name is required.")
+        return name[:120]
+
+
 class ItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Item

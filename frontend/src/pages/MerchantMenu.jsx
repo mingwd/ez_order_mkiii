@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { apiMerchantRestaurantItems } from "../api/client";
+import MerchantBar from "../components/MerchantBar";
 
 export default function MerchantMenu() {
     const { restId } = useParams();              // /merchant/restaurants/:restId/menu
@@ -32,8 +33,10 @@ export default function MerchantMenu() {
     }, [restId]);
 
     return (
-        <div className="w-screen min-h-screen p-6 flex flex-col items-center">
-            <div className="w-full max-w-4xl flex items-center justify-between mb-6 gap-4">
+        <div className="w-screen min-h-screen flex flex-col items-center">
+            <MerchantBar />
+            <div className="p-6 w-full max-w-4xl">
+            <div className="flex items-center justify-between mb-6 gap-4">
                 <div>
                     <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
                         Menu
@@ -116,6 +119,7 @@ export default function MerchantMenu() {
                         ))}
                     </ul>
                 )}
+            </div>
             </div>
         </div>
     );

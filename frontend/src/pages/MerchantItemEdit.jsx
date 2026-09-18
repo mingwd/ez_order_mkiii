@@ -7,6 +7,7 @@ import {
     apiMerchantCreateItem,
     apiMerchantTags,
 } from "../api/client";
+import MerchantBar from "../components/MerchantBar";
 
 export default function MerchantItemEdit({ mode }) {
     const navigate = useNavigate();
@@ -215,15 +216,20 @@ export default function MerchantItemEdit({ mode }) {
 
     if (loading) {
         return (
-            <div className="w-screen h-screen flex items-center justify-center text-[var(--ez-muted)]">
-                Loading…
+            <div className="w-screen min-h-screen">
+                <MerchantBar />
+                <div className="h-[70vh] flex items-center justify-center text-[var(--ez-muted)]">
+                    Loading…
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="w-screen min-h-screen flex justify-center p-6">
-            <div className="w-full max-w-3xl ez-card rounded-3xl p-7">
+        <div className="w-screen min-h-screen flex flex-col items-center">
+            <MerchantBar />
+            <div className="w-full max-w-3xl p-6">
+            <div className="w-full ez-card rounded-3xl p-7">
                 <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
                     {effectiveMode === "edit" ? "Edit item" : "New item"}
                 </p>
@@ -389,6 +395,7 @@ export default function MerchantItemEdit({ mode }) {
                         </button>
                     </div>
                 </form>
+            </div>
             </div>
         </div>
     );

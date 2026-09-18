@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiLogin, apiRegisterMerchant, apiMe } from "../api/client";
+import MerchantBar from "../components/MerchantBar";
 
 export default function MerchantAuth() {
     const nav = useNavigate();
@@ -50,15 +51,10 @@ export default function MerchantAuth() {
     }
 
     return (
-        <div className="w-screen h-screen flex items-center justify-center px-4">
-            <div className="w-full max-w-md ez-card rounded-3xl p-8 relative">
-                <button
-                    className="btn-link absolute right-6 top-6 text-xs"
-                    onClick={() => nav("/")}
-                >
-                    ← Back to Customer
-                </button>
-
+        <div className="w-screen min-h-screen flex flex-col">
+            <MerchantBar />
+            <div className="flex-1 flex items-center justify-center px-4 py-8">
+            <div className="w-full max-w-md ez-card rounded-3xl p-8">
                 <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
                     Merchant
                 </p>
@@ -130,6 +126,7 @@ export default function MerchantAuth() {
                         </>
                     )}
                 </div>
+            </div>
             </div>
         </div>
     );
