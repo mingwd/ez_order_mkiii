@@ -553,6 +553,40 @@ def create_order(request):
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
+def my_orders(request):
+    orders = (
+        Order.objects.filter(user=request.user)
+        .exclude(status="cancelled")
+        .select_related("restaurant")
+        .prefetch_related("items__item")
+        .order_by("-created_at")
+    )
+    payload = []
+    for order in orders:
+        payload.append(
+            {
+                "order_id": order.id,
+                "ordered_at": order.created_at.isoformat(),
+                "status": order.status,
+                "restaurant_id": order.restaurant_id,
+                "restaurant_name": order.restaurant.name,
+                "total_price": str(order.total_price),
+                "items": [
+                    {
+                        "item_id": oi.item_id,
+                        "name": oi.item.name,
+                        "quantity": oi.quantity,
+                        "price": str(oi.price_at_order),
+                    }
+                    for oi in order.items.all()
+                ],
+            }
+        )
+    return Response({"orders": payload})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
 def merchant_my_restaurants(request):
 
     try:

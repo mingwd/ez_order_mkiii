@@ -1,6 +1,6 @@
 // src/pages/Profile.jsx
 import { useEffect, useState } from "react";
-import { apiGetProfile, apiUpdateProfile } from "../api/client";
+import { apiGetProfile, apiUpdateProfile, apiMyOrders } from "../api/client";
 import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
@@ -21,11 +21,18 @@ export default function Profile() {
         allergens: new Set(),
     });
 
+    const [orders, setOrders] = useState([]);
+    const [historyOpen, setHistoryOpen] = useState(false);
+
     useEffect(() => {
         (async () => {
             try {
-                const d = await apiGetProfile();
+                const [d, orderData] = await Promise.all([
+                    apiGetProfile(),
+                    apiMyOrders().catch(() => ({ orders: [] })),
+                ]);
                 setData(d);
+                setOrders(orderData.orders || []);
                 // reset muted tags on load
                 setMuted({
                     cuisines: new Set(),
@@ -507,6 +514,68 @@ export default function Profile() {
                     </div>
                 </div>
             </form>
+
+            <div className="ez-card w-full max-w-3xl rounded-3xl p-5 mt-5 mb-8">
+                <button
+                    type="button"
+                    className="btn-ghost w-full justify-between px-3"
+                    onClick={() => setHistoryOpen((v) => !v)}
+                    aria-expanded={historyOpen}
+                >
+                    <span>Order history</span>
+                    <span className="text-[var(--ez-muted)] font-medium">
+                        {orders.length} {orders.length === 1 ? "order" : "orders"}{" "}
+                        {historyOpen ? "▴" : "▾"}
+                    </span>
+                </button>
+
+                {historyOpen && (
+                    <div className="mt-4 space-y-3">
+                        {orders.length === 0 ? (
+                            <p className="text-sm text-[var(--ez-muted)] text-center py-6">
+                                No orders yet.
+                            </p>
+                        ) : (
+                            orders.map((o) => (
+                                <div
+                                    key={o.order_id}
+                                    className="rounded-xl bg-[var(--ez-bg)] px-4 py-3 text-sm"
+                                >
+                                    <div className="flex justify-between gap-3 items-baseline">
+                                        <div className="font-semibold text-[var(--ez-ink)]">
+                                            {o.restaurant_name}
+                                        </div>
+                                        <div className="tabular-nums font-bold text-[var(--ez-primary)] shrink-0">
+                                            ${Number(o.total_price).toFixed(2)}
+                                        </div>
+                                    </div>
+                                    <div className="text-xs text-[var(--ez-muted)] mt-0.5">
+                                        #{o.order_id}
+                                        {o.ordered_at
+                                            ? ` · ${new Date(o.ordered_at).toLocaleString()}`
+                                            : ""}
+                                    </div>
+                                    <ul className="mt-2 space-y-1 text-[var(--ez-ink)]">
+                                        {(o.items || []).map((it) => (
+                                            <li
+                                                key={`${o.order_id}-${it.item_id}`}
+                                                className="flex justify-between gap-3"
+                                            >
+                                                <span>
+                                                    {it.quantity} × {it.name}
+                                                </span>
+                                                <span className="tabular-nums text-[var(--ez-muted)] shrink-0">
+                                                    ${(Number(it.price) * it.quantity).toFixed(2)}
+                                                </span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

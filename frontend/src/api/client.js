@@ -99,6 +99,17 @@ export async function apiUpdateProfile(payload) {
     return r.json();
 }
 
+export async function apiMyOrders() {
+    const r = await fetch(`${BASE}/api/restaurants/orders/mine/`, {
+        headers: {
+            "Content-Type": "application/json",
+            ...authHeaders(),
+        },
+    });
+    if (!r.ok) throw new Error("orders failed");
+    return r.json();
+}
+
 export async function apiPlaceOrder(restaurantId, items) {
     // items: [{ item_id: 1, quantity: 2 }, ...]
     const r = await fetch(`${BASE}/api/restaurants/orders/`, {
