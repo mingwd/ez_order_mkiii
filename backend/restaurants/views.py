@@ -1,15 +1,18 @@
 import json
 import os
+from collections import Counter
 from decimal import Decimal
 from django.db import transaction
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models import F
+from django.db.models import F, Prefetch
 from .models import (
-    Restaurant, 
+    Restaurant,
     Item,
+    Order,
+    OrderItem,
     CuisineTag,
     ProteinTag,
     SpicinessTag,
@@ -37,19 +40,123 @@ from accounts.models import (
     UserAllergenPreference,
 )
 
-from openai import OpenAI
+from openai import OpenAI, APIError, AuthenticationError, RateLimitError
 
-def pref_qs_to_list(qs, label_attr="tag__label"):
-    return [
-        {
-            "label": getattr(row, label_attr.split("__")[0]).label,
-            "score": row.score,
-        }
-        for row in qs.order_by("-score")
-    ]
+def item_tag_labels(item: Item):
+    return {
+        "cuisines": [t.label for t in item.cuisines.all()],
+        "proteins": [t.label for t in item.proteins.all()],
+        "spiciness": item.spice_levels.label if item.spice_levels else None,
+        "meal_types": [t.label for t in item.meal_types.all()],
+        "flavors": [t.label for t in item.flavors.all()],
+        "allergens": [t.label for t in item.allergens.all()],
+        "nutritions": [t.label for t in item.nutritions.all()],
+    }
+
+
+def pref_qs_to_list(qs, counts):
+    rows = []
+    seen = set()
+    for row in qs.select_related("tag").order_by("-score"):
+        label = row.tag.label
+        seen.add(label)
+        rows.append(
+            {
+                "label": label,
+                "score": row.score,
+                "count": int(counts.get(label, 0)),
+            }
+        )
+    for label, count in counts.most_common():
+        if label in seen:
+            continue
+        rows.append({"label": label, "score": 0, "count": int(count)})
+    return rows
+
+
+def build_tag_counts(user):
+    counters = {
+        "cuisines": Counter(),
+        "proteins": Counter(),
+        "spice_levels": Counter(),
+        "meal_types": Counter(),
+        "flavors": Counter(),
+        "allergens": Counter(),
+        "nutritions": Counter(),
+    }
+    order_items = (
+        OrderItem.objects.filter(order__user=user)
+        .exclude(order__status="cancelled")
+        .select_related("item", "item__spice_levels")
+        .prefetch_related(
+            "item__cuisines",
+            "item__proteins",
+            "item__meal_types",
+            "item__flavors",
+            "item__allergens",
+            "item__nutritions",
+        )
+    )
+    for oi in order_items:
+        qty = oi.quantity or 1
+        tags = item_tag_labels(oi.item)
+        for key, labels in tags.items():
+            bucket = "spice_levels" if key == "spiciness" else key
+            if isinstance(labels, list):
+                for label in labels:
+                    counters[bucket][label] += qty
+            elif labels:
+                counters[bucket][labels] += qty
+    return counters
+
+
+def build_order_history(user, limit=20):
+    orders = (
+        Order.objects.filter(user=user)
+        .exclude(status="cancelled")
+        .select_related("restaurant")
+        .prefetch_related(
+            Prefetch(
+                "items",
+                queryset=OrderItem.objects.select_related(
+                    "item", "item__spice_levels"
+                ).prefetch_related(
+                    "item__cuisines",
+                    "item__proteins",
+                    "item__meal_types",
+                    "item__flavors",
+                    "item__allergens",
+                    "item__nutritions",
+                ),
+            )
+        )
+        .order_by("-created_at")[:limit]
+    )
+    history = []
+    for order in orders:
+        history.append(
+            {
+                "order_id": order.id,
+                "ordered_at": order.created_at.isoformat(),
+                "restaurant_id": order.restaurant_id,
+                "restaurant_name": order.restaurant.name,
+                "items": [
+                    {
+                        "item_id": oi.item_id,
+                        "name": oi.item.name,
+                        "quantity": oi.quantity,
+                        "tags": item_tag_labels(oi.item),
+                    }
+                    for oi in order.items.all()
+                ],
+            }
+        )
+    return history
 
 
 def build_user_context(profile: UserProfile):
+    user = profile.user
+    tag_counts = build_tag_counts(user)
     return {
         "basic": {
             "height_cm": profile.height_cm,
@@ -61,28 +168,39 @@ def build_user_context(profile: UserProfile):
         },
         "preferences": {
             "cuisines": pref_qs_to_list(
-                UserCuisinePreference.objects.filter(profile=profile)
+                UserCuisinePreference.objects.filter(profile=profile),
+                tag_counts["cuisines"],
             ),
             "flavors": pref_qs_to_list(
-                UserFlavorPreference.objects.filter(profile=profile)
+                UserFlavorPreference.objects.filter(profile=profile),
+                tag_counts["flavors"],
             ),
             "nutritions": pref_qs_to_list(
-                UserNutritionPreference.objects.filter(profile=profile)
+                UserNutritionPreference.objects.filter(profile=profile),
+                tag_counts["nutritions"],
             ),
             "proteins": pref_qs_to_list(
-                UserProteinPreference.objects.filter(profile=profile)
+                UserProteinPreference.objects.filter(profile=profile),
+                tag_counts["proteins"],
             ),
             "spice_levels": pref_qs_to_list(
                 UserSpicePreference.objects.filter(profile=profile),
-                label_attr="tag__label",
+                tag_counts["spice_levels"],
             ),
             "meal_types": pref_qs_to_list(
-                UserMealTypePreference.objects.filter(profile=profile)
+                UserMealTypePreference.objects.filter(profile=profile),
+                tag_counts["meal_types"],
             ),
             "allergens": pref_qs_to_list(
-                UserAllergenPreference.objects.filter(profile=profile)
+                UserAllergenPreference.objects.filter(profile=profile),
+                tag_counts["allergens"],
             ),
         },
+        "tag_counts": {
+            key: [{"label": label, "count": int(count)} for label, count in counter.most_common()]
+            for key, counter in tag_counts.items()
+        },
+        "order_history": build_order_history(user),
     }
 
 def build_restaurant_bundle(restaurants_qs): # python dict to json
@@ -113,15 +231,7 @@ def build_restaurant_bundle(restaurants_qs): # python dict to json
                     "id": it.id,
                     "name": it.name,
                     "price": float(it.price),
-                    "tags": {
-                        "cuisines": [t.label for t in it.cuisines.all()],
-                        "proteins": [t.label for t in it.proteins.all()],
-                        "spiciness": it.spice_levels.label if it.spice_levels else None,
-                        "meal_types": [t.label for t in it.meal_types.all()],
-                        "flavors": [t.label for t in it.flavors.all()],
-                        "allergens": [t.label for t in it.allergens.all()],
-                        "nutritions": [t.label for t in it.nutritions.all()],
-                    },
+                    "tags": item_tag_labels(it),
                 }
             )
 
@@ -202,11 +312,15 @@ def ai_order(request):
 
     system_prompt ="""
         You are a food-ordering assistant. You will receive a JSON containing:
-        user: the user`s basic information and historical preferences (a higher score for a tag means the user likes it more)
+        user.basic: height, weight, age, gender, activity_level, memo
+        user.preferences: tag scores (higher score means the user currently likes it more; score 0 may mean muted)
+        user.tag_counts: how many times each tag appeared in the user's past orders (quantity-weighted)
+        user.order_history: recent past orders with restaurant, dishes, quantities, and tags
         restaurants: the list of available restaurants and their menus; each dish has a name, price, and several tags
         Your tasks:
         Only choose from the provided restaurants and items. Do NOT invent new IDs or dish names.
-        Pick one restaurant, and select 1-3 dishes from that restaurant based on user info (watch user memo, combine all info and try to give what user wants).
+        Pick one restaurant, and select 1-3 dishes from that restaurant based on user info (watch user memo, past orders, tag counts, and scores; combine all info and try to give what user wants).
+        Prefer patterns that show up often in order_history / tag_counts, unless memo or muted preferences say otherwise.
         Avoid allergens that are obviously unsuitable for the user. If information is insufficient, you may ignore allergens.
         Keep the total price reasonable (for example, don`t order 10 items for one person).
         You must return the result in the following JSON schema exactly as shown, without adding extra fields:
@@ -215,7 +329,7 @@ def ai_order(request):
         "items": [
             { "item_id": <int, must belong to the chosen restaurant>, "quantity": <int, 1-3> }
         ],
-        "comment": "<Briefly explain of why you chose this order>"
+        "comment": "<explanation of why you chose this order, include parameters that you used to make the decision>"
         }
 
         }
@@ -226,17 +340,35 @@ def ai_order(request):
         "restaurants": rest_bundle,
     }
 
-    completion = client.chat.completions.create(
-        model="gpt-5.1",
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": system_prompt},
+    try:
+        completion = client.chat.completions.create(
+            model="gpt-5.1",
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": json.dumps(user_payload, ensure_ascii=False, default=float),
+                },
+            ],
+        )
+    except RateLimitError:
+        return Response(
             {
-                "role": "user",
-                "content": json.dumps(user_payload, ensure_ascii=False, default=float),
+                "detail": "AI ordering needs credits."
             },
-        ],
-    )
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except AuthenticationError:
+        return Response(
+            {"detail": "AI ordering is misconfigured (invalid OpenAI API key)."},
+            status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    except APIError as e:
+        return Response(
+            {"detail": f"AI ordering failed: {getattr(e, 'message', None) or str(e)}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
 
     raw = completion.choices[0].message.content
     try:

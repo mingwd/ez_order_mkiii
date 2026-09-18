@@ -388,6 +388,7 @@ export default function Home() {
                     </div>
 
                     <button
+                        className="btn-breathe"
                         onClick={handleAiOrderClick}
                     >
                         Pick for me
@@ -413,7 +414,7 @@ export default function Home() {
                 </div>
             </header>
 
-            <main className="flex-1 min-h-0 w-full px-4 md:px-6 pb-4">
+            <main className="flex-1 min-h-0 w-full px-4 md:px-6 pt-4 md:pt-5 pb-4">
                 <div className="grid grid-cols-12 gap-4 md:gap-5 h-full">
                     <div className="col-span-12 lg:col-span-8 ez-card rounded-3xl h-full min-h-[280px] overflow-hidden">
                         <div className="w-full h-full">
@@ -625,13 +626,41 @@ export default function Home() {
 
             {orderSuccess && (
                     <div
-                        className="fixed inset-0 ez-overlay flex items-center justify-center p-4 z-50"
+                        className={`fixed inset-0 flex items-center justify-center p-4 z-50 ${
+                            orderSuccess.aiMessage ? "ez-celebrate-overlay" : "ez-overlay"
+                        }`}
                         onClick={() => setOrderSuccess(null)}
                     >
                         <div
-                            className="w-full max-w-lg ez-card rounded-3xl shadow-lg p-6 relative"
+                            className={`w-full max-w-sm rounded-3xl p-4 pt-5 relative ${
+                                orderSuccess.aiMessage ? "ez-celebrate-card" : "ez-card shadow-lg"
+                            }`}
                             onClick={(e) => e.stopPropagation()}
                         >
+                            {orderSuccess.aiMessage && (
+                                <div className="ez-confetti" aria-hidden="true">
+                                    {[
+                                        ["8%", "#FF6A1A", "0s"],
+                                        ["18%", "#ffb347", "0.12s"],
+                                        ["28%", "#191919", "0.05s"],
+                                        ["40%", "#FF6A1A", "0.22s"],
+                                        ["52%", "#e85d12", "0.08s"],
+                                        ["64%", "#ffd7bf", "0.18s"],
+                                        ["74%", "#FF6A1A", "0.3s"],
+                                        ["86%", "#191919", "0.14s"],
+                                    ].map(([left, color, delay], i) => (
+                                        <span
+                                            key={i}
+                                            style={{
+                                                left,
+                                                background: color,
+                                                animationDelay: delay,
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                            )}
+
                             <button
                                 onClick={() => setOrderSuccess(null)}
                                 className="btn-icon absolute right-4 top-4"
@@ -640,46 +669,60 @@ export default function Home() {
                                 ×
                             </button>
 
-                            <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
-                                Confirmed
-                            </p>
-                            <h3 className="text-2xl font-bold text-[var(--ez-ink)] mb-2">
-                                Order placed!
-                            </h3>
-                            <p className="text-sm text-[var(--ez-muted)] mb-4">
-                                Thank you for your order. Your food is being prepared.
-                            </p>
+                            {orderSuccess.aiMessage ? (
+                                <>
+                                    <div className="ez-celebrate-seal" aria-hidden="true">
+                                        ✓
+                                    </div>
+                                    <p className="ez-celebrate-kicker text-[10px] font-semibold uppercase text-[var(--ez-primary)] text-center mb-1">
+                                        AI pick revealed
+                                    </p>
+                                    <h3 className="ez-celebrate-title text-xl font-extrabold text-[var(--ez-ink)] mb-3 text-center tracking-tight">
+                                        This one&apos;s for you
+                                    </h3>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="text-xs font-semibold tracking-[0.18em] uppercase text-[var(--ez-primary)] mb-2">
+                                        Confirmed
+                                    </p>
+                                    <h3 className="text-xl font-bold text-[var(--ez-ink)] mb-1">
+                                        Order placed!
+                                    </h3>
+                                    <p className="text-xs text-[var(--ez-muted)] mb-3">
+                                        Thank you for your order. Your food is being prepared.
+                                    </p>
+                                </>
+                            )}
 
-                            <div className="text-sm text-[var(--ez-ink)] space-y-1 mb-4 rounded-xl bg-[var(--ez-bg)] p-4">
-                                <div>
-                                    <span className="font-semibold">Order ID:</span>{" "}
-                                    #{orderSuccess.orderId}
+                            <div className="text-center rounded-2xl bg-white border border-[var(--ez-line)] px-3 py-2.5 mb-3">
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--ez-muted)] font-semibold">
+                                    Tonight&apos;s kitchen
                                 </div>
-                                <div>
-                                    <span className="font-semibold">
-                                        Restaurant:
-                                    </span>{" "}
+                                <div className="text-base font-extrabold text-[var(--ez-ink)] mt-0.5">
                                     {orderSuccess.restaurantName}
                                 </div>
-                                <div>
-                                    <span className="font-semibold">Total:</span>{" "}
+                                <div className="mt-1 text-xl font-extrabold tabular-nums text-[var(--ez-primary)]">
                                     ${Number(orderSuccess.totalPrice).toFixed(2)}
+                                </div>
+                                <div className="text-[11px] text-[var(--ez-muted)] mt-0.5">
+                                    Order #{orderSuccess.orderId}
                                 </div>
                             </div>
 
-                            <div className="border-t border-[var(--ez-line)] pt-3 mt-3 max-h-40 overflow-y-auto ez-scroll text-sm">
-                                <div className="font-semibold text-[var(--ez-ink)] mb-2">
-                                    Items
+                            <div className="rounded-2xl border border-dashed border-[var(--ez-line)] px-3 py-2 max-h-24 overflow-y-auto ez-scroll text-xs">
+                                <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--ez-muted)] font-semibold mb-1.5">
+                                    Your plate
                                 </div>
                                 {orderSuccess.items.map((c) => (
                                     <div
                                         key={`${c.restaurantId}-${c.itemId}`}
-                                        className="flex justify-between text-[var(--ez-ink)] mb-1"
+                                        className="flex justify-between text-[var(--ez-ink)] mb-1.5 last:mb-0"
                                     >
                                         <span>
                                             {c.qty} × {c.name}
                                         </span>
-                                        <span className="tabular-nums">
+                                        <span className="tabular-nums font-medium">
                                             ${(c.qty * c.price).toFixed(2)}
                                         </span>
                                     </div>
@@ -687,15 +730,15 @@ export default function Home() {
                             </div>
 
                             {orderSuccess.aiMessage && (
-                                <div className="mt-4 border-t border-[var(--ez-line)] pt-3 text-sm text-[var(--ez-muted)]">
-                                    <div className="font-semibold text-[var(--ez-ink)] mb-1">
-                                        Why we picked this (AI):
+                                <div className="ez-ai-quote mt-3 rounded-r-2xl px-3 py-2.5 text-xs text-[var(--ez-ink)]">
+                                    <div className="text-[10px] uppercase tracking-[0.16em] text-[var(--ez-primary)] font-semibold mb-1">
+                                        A note from your AI maître d&apos;
                                     </div>
-                                    <p className="leading-relaxed">{orderSuccess.aiMessage}</p>
+                                    <p className="leading-relaxed italic">&ldquo;{orderSuccess.aiMessage}&rdquo;</p>
                                 </div>
                             )}
 
-                            <div className="mt-5 flex justify-end gap-3">
+                            <div className="mt-3 flex justify-end gap-2">
                                 <button
                                     className="btn-ghost"
                                     onClick={() => setOrderSuccess(null)}
